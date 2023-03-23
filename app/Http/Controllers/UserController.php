@@ -1,0 +1,162 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class UserController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $data = [
+            'users'=>User::paginate(10),
+            'title'=>'User'
+        ];
+
+        return view('user.index',$data);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {   
+        $data = [
+            'title'=>'Tambah User',
+            'roles'=>Role::all()
+        ];
+
+        return view('user.create',$data);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {   
+        $request->validate([
+            'nama'=>'required',
+            'username'=>'required|string|unique:users,username',
+            'password'=>'required|string|min:6',
+        ]);
+        DB::beginTransaction();
+        try {
+            $user = new User;
+            $user->nama = $request->nama;
+            $user->username = $request->username;
+            $user->password = bcrypt($request->password);
+            $user->email = $request->email;
+            $user->no_telp = $request->no_telp;
+            $user->save();
+            //asign role_id
+            $user->roles()->attach($request->role_id);
+            DB::commit();
+            return redirect()->route('user.index')->with('success','User berhasil ditambahkan');
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return redirect()->route('user.index')->with('error','User gagal ditambahkan : '.$th->getMessage());
+        } 
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function show(User $user)
+    {
+        $data = [
+            'title'=>'Detail User',
+            'user'=>$user
+        ];
+
+        return view('user.show',$data);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(User $user)
+    {
+        $data = [
+            'title'=>'Detail User',
+            'user'=>$user,
+            'roles'=>Role::all()
+        ];
+       
+        return view('user.edit',$data);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, User $user)
+    {
+        $request->validate([
+            'nama'=>'required',
+            'username'=>'required|string|unique:users,username,'.$user->id,
+            
+        ]);
+        DB::beginTransaction();
+        try {
+            $user->nama = $request->nama;
+            $user->username = $request->username;
+            if($request->has('ubah_password')){
+                $request->validate([
+                    'password'=>'required|string|min:6',
+                ]);
+                $user->password = bcrypt($request->password);
+            }
+            $user->email = $request->email;
+            $user->no_telp = $request->no_telp;
+            $user->save();
+            //asign role_id
+            $user->roles()->sync($request->role_id);
+            DB::commit();
+            return redirect()->route('user.index')->with('success','User berhasil ubah');
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return redirect()->route('user.index')->with('error','User gagal ubah : '.$th->getMessage());
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\User  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(User $user)
+    {
+        DB::beginTransaction();
+        try {
+            $user->delete();
+            DB::commit();
+            return redirect()->route('user.index')->with('success','User berhasil dihapus');
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return redirect()->route('user.index')->with('error','User gagal dihapus : '.$th->getMessage());
+        }
+    }
+}
