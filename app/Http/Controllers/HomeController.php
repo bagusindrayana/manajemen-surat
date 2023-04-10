@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Pion\Laravel\ChunkUpload\Providers\ChunkUploadServiceProvider;
-use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
+use App\Helpers\StorageHelper;
+use App\Models\Surat;
 
 class HomeController extends Controller
 {
     public function index()
     {   
-        return view('welcome');
+
+        
+        $totalSuratMasuk = Surat::count();
+        $totalSuratMasukSelesai = Surat::where('status','selesai')->count();
+        $totalSuratMasukDitolak = Surat::where('status','ditolak')->count();
+        return view('welcome',compact('totalSuratMasuk','totalSuratMasukSelesai','totalSuratMasukDitolak'));
     }
 }

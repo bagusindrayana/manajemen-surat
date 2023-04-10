@@ -68,6 +68,49 @@ class CloudStorage extends Model
                     ]), FALSE);
                 }
                 break;
+            case 's3':
+                $setting = $this->setting;
+                $storage = Storage::createS3Driver([
+                    'driver' => 's3',
+                    'key'    => $setting->access_key_id,
+                    'secret' => $setting->secret_access_key,
+                    'region' => $setting->region ?? 'us-east-1',
+                    'bucket' => $setting->bucket,
+                    'endpoint'=>$setting->endpoint,
+                ]);
+                $storageFiles = $storage->files("_manajemen_surat/".Auth::user()->id);
+                foreach ($storageFiles as $sf) {
+                    $files[] = json_decode(json_encode([
+                        'name' => basename($sf),
+                        'size' => $storage->size($sf),
+                        'url' => $storage->url($sf),
+                        'createdTime' => $storage->lastModified($sf),
+                        'mimeType' => $storage->mimeType($sf),
+                    ]), FALSE);
+                }
+                break;
+            case 'ftp':
+                $setting = $this->setting;
+                $storage = Storage::createFtpDriver([
+                    'driver' => 'ftp',
+                    'host'    => $setting->host,
+                    'port' => $setting->port,
+                    'username' => $setting->username,
+                    'password' => $setting->password,
+                    'root'=>$setting->root,
+                ]);
+                $storageFiles = $storage->files("_manajemen_surat/".Auth::user()->id);
+                foreach ($storageFiles as $sf) {
+                    $files[] = json_decode(json_encode([
+                        'name' => basename($sf),
+                        'size' => $storage->size($sf),
+                        'url' => '-',
+                        'createdTime' => $storage->lastModified($sf),
+                        'mimeType' => $storage->mimeType($sf),
+                    ]), FALSE);
+                }
+                break;
+                
             default:
                 # code...
                 break;
@@ -150,6 +193,50 @@ class CloudStorage extends Model
                 $result = $_path = $setting->directory_name . '/' . Auth::user()->id . '/' . basename($path);
                 Storage::move($path, $_path);
                 break;
+            case 's3':
+                $result = $_path = '_manajemen_surat/' . Auth::user()->id . '/' . basename($path);
+                $storage = Storage::createS3Driver([
+                    'driver' => 's3',
+                    'key'    => $setting->access_key_id,
+                    'secret' => $setting->secret_access_key,
+                    'region' => $setting->region ?? 'us-east-1',
+                    'bucket' => $setting->bucket,
+                    'endpoint'=>$setting->endpoint,
+                ]);
+                try {
+                    $content = Storage::get($path);
+                    $cek = $storage->put($_path, $content);
+                    if(!$cek){
+                       throw new \Exception("Gagal upload ke s3");
+                    }
+                } catch (\Aws\S3\Exception\S3Exception $th) {
+                    throw new \Exception($th->getMessage());
+                }
+                
+                
+                break;
+            case 'ftp':
+                $result = $_path = '_manajemen_surat/' . Auth::user()->id . '/' . basename($path);
+                $storage = Storage::createFtpDriver([
+                    'driver' => 'ftp',
+                    'host'    => $setting->host,
+                    'port' => $setting->port,
+                    'username' => $setting->username,
+                    'password' => $setting->password,
+                    'root'=>$setting->root,
+                ]);
+                try {
+                    $content = Storage::get($path);
+                    $cek = $storage->put($_path, $content);
+                    if(!$cek){
+                        throw new \Exception("Gagal upload ke ftp");
+                    }
+                } catch (\Aws\S3\Exception\S3Exception $th) {
+                    throw new \Exception($th->getMessage());
+                }
+                
+                
+                break;
             default:
                 # code...
                 break;
@@ -157,4 +244,6 @@ class CloudStorage extends Model
 
         return $result;
     }
+
+    
 }

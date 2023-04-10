@@ -1,9 +1,11 @@
 <?php
 namespace App\Helpers;
 
+use App\Jobs\NotifEmail;
+use App\Jobs\NotifWa;
+use App\Models\Notifikasi;
 use App\Models\Surat;
 use App\Models\SuratDisposisi;
-use Exception;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationHelper
@@ -39,5 +41,36 @@ class NotificationHelper
     {
         $_surat = Surat::where('status','ditolak')->where('user_id',Auth::user()->id)->get();
         return $_surat;
+    }
+
+    public static function createNotification($user_id,$keterangan,$url,$type = "info")
+    {
+        $notif = Notifikasi::create([
+            'user_id' => $user_id,
+            'keterangan' => $keterangan,
+            'url' => $url,
+            'type' => $type
+        ]);
+        foreach ($notif->user->kontak_notifikasis  as $key => $value) {
+            if($value->type == "wa"){
+                dispatch(new NotifWa($value->kontak,$notif->keterangan."\n".url($notif->url) ));
+            }
+
+            if($value->type == "email"){
+                
+                dispatch(new NotifEmail($value->kontak,$notif->keterangan));
+            }
+        }
+        return $notif;
+    }
+
+    public static function myNotification()
+    {
+        return Notifikasi::where('user_id',Auth::user()->id)->orderBy('created_at','DESC')->get();
+    }
+
+    public static function myTotalUnreadNotification()
+    {
+        return Notifikasi::where('user_id',Auth::user()->id)->where('is_read',false)->count();
     }
 }

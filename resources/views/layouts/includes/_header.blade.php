@@ -3,7 +3,7 @@
       <div class="d-flex justify-content-between w-100" id="navbarSupportedContent">
         <div class="d-flex align-items-center">
           <!-- Search form -->
-          <form class="navbar-search form-inline" id="navbar-search-main">
+          {{-- <form class="navbar-search form-inline" id="navbar-search-main">
             <div class="input-group input-group-merge search-bar">
               <span class="input-group-text" id="topbar-addon">
                 <svg class="icon icon-xs" x-description="Heroicon name: solid/search"
@@ -16,13 +16,13 @@
               <input type="text" class="form-control" id="topbarInputIconLeft" placeholder="Search"
                 aria-label="Search" aria-describedby="topbar-addon">
             </div>
-          </form>
+          </form> --}}
           <!-- / Search form -->
         </div>
         <!-- Navbar links -->
         <ul class="navbar-nav align-items-center">
           <li class="nav-item dropdown  mx-6">
-            <a class="nav-link text-dark notification-bell unread dropdown-toggle" data-unread-notifications="true"
+            <a class="nav-link text-dark notification-bell @if(NotificationHelper::myTotalUnreadNotification() > 0) unread @endif dropdown-toggle" data-unread-notifications="true"
               href="#" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
               <svg class="icon icon-sm text-gray-900" fill="currentColor" viewBox="0 0 20 20"
                 xmlns="http://www.w3.org/2000/svg">
@@ -34,7 +34,28 @@
             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-center mt-2 py-0">
               <div class="list-group list-group-flush ">
                 <a href="#" class="text-center text-primary fw-bold border-bottom border-light py-3">Notifications</a>
-                @foreach (NotificationHelper::mySuratDisposisi() as $item)
+                @foreach (NotificationHelper::myNotification() as $item)
+                  <a href="{{ url($item->url) }}" class="list-group-item list-group-item-action border-bottom notifikasi" data-id="{{ $item->id }}">
+                    <div class="row align-items-center">
+                      <div class="col-auto">
+                        <!-- Avatar -->
+                        <i class="fas fa-envelope"></i>
+                      </div>
+                      <div class="col ps-0 ms-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                          {{-- <div>
+                            <h4 class="h6 mb-0 text-small">{{ $item->surat->user->nama }}</h4>
+                          </div> --}}
+                          <div class="text-end">
+                            <small class="text-danger">{{ $item->created_at->diffForHumans() }}</small>
+                          </div>
+                        </div>
+                        <p class="font-small mt-1 mb-0">{{ $item->keterangan }}</p>
+                      </div>
+                    </div>
+                  </a>
+                @endforeach
+                {{-- @foreach (NotificationHelper::mySuratDisposisi() as $item)
                   <a href="#" class="list-group-item list-group-item-action border-bottom">
                     <div class="row align-items-center">
                       <div class="col-auto">
@@ -80,7 +101,7 @@
                       </div>
                     </div>
                   </a>
-                @endforeach
+                @endforeach --}}
                 
                 {{-- <a href="#" class="list-group-item list-group-item-action border-bottom">
                   <div class="row align-items-center">
@@ -181,7 +202,7 @@
               aria-expanded="false">
               <div class="media d-flex align-items-center">
                 <img class="avatar rounded-circle" alt="Image placeholder"
-                  src="{{ url('/') }}/img/team/profile-picture-3.jpg">
+                  src="{{ Avatar::create(auth()->user()->nama)->toBase64() }}">
                 <div class="media-body ms-2 text-dark align-items-center d-none d-lg-block">
                   <span class="mb-0 font-small fw-bold text-gray-900">{{ auth()->user()->nama }}</span>
                 </div>
@@ -243,3 +264,24 @@
       </div>
     </div>
   </nav>
+
+  @push('scripts')
+      <script>
+        var urlNotification = '{{ url("ajax/read-notification") }}/';
+
+
+        //hover listener to .notifikasi
+        document.querySelector('.notifikasi').addEventListener('mouseover', function() {
+          //get data-id
+          var id = this.getAttribute('data-id');
+
+          //send POST request using xhr
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', urlNotification+id, true);
+          xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+          xhr.send();
+          
+
+        });
+      </script>
+  @endpush

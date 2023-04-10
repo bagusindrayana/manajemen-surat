@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\GhostscriptHelper;
+use App\Helpers\NotificationHelper;
 use App\Helpers\StorageHelper;
+use App\Helpers\UserLogHelper;
 use App\Models\Berkas;
 use App\Models\CloudStorage;
 use App\Models\Role;
@@ -14,6 +16,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Webklex\PDFMerger\Facades\PDFMergerFacade as PDFMerger;
 use ZipArchive;
 
@@ -26,7 +29,7 @@ class SuratController extends Controller
      */
     public function index()
     {
-        $surats = Surat::filtersInput(null, 'search')->paginate(10);
+        $surats = Surat::filtersInput(null, 'search')->orderBy('created_at','desc')->paginate(10);
         $data = [
             'surats' => $surats,
             'title' => 'Surat'
@@ -76,40 +79,74 @@ class SuratController extends Controller
                 'isi' => $request->isi,
             ]);
             foreach ($request->user_id as $key => $user_id) {
+                $role_id = $request->role_id[$key];
                 $surat->disposisis()->create([
                     'user_id' => $user_id,
-                    'role_id' => $request->role_id[$key],
+                    'role_id' => $role_id,
                     'menunggu_persetujuan_id'=> $request->menunggu_persetujuan_id[$key],
                     'keterangan' => $request->keterangan[$key],
                 ]);
-            }
-            if ($request->has('all_storage') && $request->all_storage == "true") {
-                $tmpFiles = StorageHelper::getTmpFiles();
-                $activeStorages = CloudStorage::where('status', 'active')->get();
-                foreach ($tmpFiles as $key => $tmpFile) {
-                    $berkas = $surat->berkas()->create([
-                        // 'storage_id'=>$activeStorage->id,
-                        'nama_berkas' => $tmpFile['name'],
-                        'path' => $tmpFile['path'],
-                        'mime_type' => $tmpFile['mime_type'],
-                        'size' => $tmpFile['size'],
-                    ]);
-                    foreach ($activeStorages as $key => $activeStorage) {
-                        $uploadedResult = $activeStorage->uploadFile($tmpFile['path']);
-                        $berkas->berkas_storages()->create([
-                            'storage_id' => $activeStorage->id,
-                            'berkas_id' => $berkas->id,
-                            'path' => $uploadedResult,
-                        ]);
+                if($request->menunggu_persetujuan_id[$key] != null){
+                    continue;
+                }
+                $type = "info";
+                if($request->sifat != "biasa"){
+                    $type = "warning";
+                }
+                if($user_id == 0){
+                    $users = User::whereHas('roles',function($wr)use($role_id){
+                        $wr->where('id',$role_id);
+                    })->get();
 
-                        $berkas->update([
-                            'path' => $uploadedResult
-                        ]);
+                    foreach ($users as $user) {
+                        NotificationHelper::createNotification($user->id,'Surat Masuk Perlu Disposisi : '.$surat->nomor_surat,'surat/'.$surat->id,$type);
                     }
-
-
+                } else {
+                    NotificationHelper::createNotification($user_id,'Surat Masuk Perlu Disposisi : '.$surat->nomor_surat,'surat/'.$surat->id,$type);
                 }
             }
+
+            $tmpFiles = StorageHelper::getTmpFiles();
+            $activeStorages = [];
+            if ($request->has('all_storage') && $request->all_storage == "true") {
+                
+                $activeStorages = CloudStorage::where('status', 'active')->get();
+                
+            } else {
+                $activeStorages = CloudStorage::where('status', 'active')->whereIn('id',$request->cloud_storage_id)->get();
+            }
+
+            foreach ($tmpFiles as $key => $tmpFile) {
+                $berkas = $surat->berkas()->create([
+                    // 'storage_id'=>$activeStorage->id,
+                    'nama_berkas' => $tmpFile['name'],
+                    'path' => $tmpFile['path'],
+                    'mime_type' => $tmpFile['mime_type'],
+                    'size' => $tmpFile['size'],
+                ]);
+                
+                
+                foreach ($activeStorages as $key => $activeStorage) {
+                    $uploadedResult = $activeStorage->uploadFile($tmpFile['path']);
+                    $berkas->berkas_storages()->create([
+                        'storage_id' => $activeStorage->id,
+                        'berkas_id' => $berkas->id,
+                        'path' => $uploadedResult,
+                    ]);
+
+                    
+                }
+                $_path = 'surat/' . Auth::user()->id . '/' . basename($tmpFile['path']);
+                $berkas->update([
+                    'path' => $_path
+                ]);
+                Storage::move($tmpFile['path'], $_path);
+
+
+            }
+
+            
+            UserLogHelper::create('menambah surat baru dengan nomor : '.$surat->nomor_surat);
             DB::commit();
             return redirect()->route('surat.index')->with('success', 'Surat berhasil ditambahkan');
         } catch (\Throwable $th) {
@@ -178,8 +215,26 @@ class SuratController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy(Surat $surat)
-    {
-        //
+    {   
+        DB::beginTransaction();
+        try {
+            $berkas = $surat->berkas;
+            foreach ($berkas as $b) {
+                foreach ($b->storages as $s) {
+                    if($s->type == "local"){
+                        Storage::delete($b->path);
+                    }
+                }
+            }
+            $surat->disposisis()->delete();
+            $surat->delete();
+            DB::commit();
+            return redirect()->route('surat.index')->with('success', 'Surat berhasil dihapus');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return redirect()->route('surat.index')->with('error', 'Surat gagal di hapus');
+
+        }
     }
 
     public function downloadPdf(Surat $surat)
@@ -201,10 +256,11 @@ class SuratController extends Controller
             $pdfMerger = PDFMerger::init();
             $pdfMerger->addPDF($path . $file_name);
             foreach ($surat->berkas as $berkas) {
-                $isLocal = $berkas->storages()->where('type', 'local')->count();
-                if ($isLocal > 0) {
-                    $pdfMerger->addPDF(storage_path() . '/app/'.$berkas->path);
-                }
+                // $isLocal = $berkas->storages()->where('type', 'local')->count();
+                // if ($isLocal > 0) {
+                //     $pdfMerger->addPDF(storage_path() . '/app/'.$berkas->path);
+                // }
+                $pdfMerger->addPDF(storage_path() . '/app/'.$berkas->path);
             }
             $pdfMerger->merge();
             $pdfMerger->save($path);
@@ -220,10 +276,11 @@ class SuratController extends Controller
                     $gs = new GhostscriptHelper(env("GHOSTSCRIPT_BIN"));
                     $gs->addInputFile($path .'tmp_'. $file_name);
                     foreach ($surat->berkas as $berkas) {
-                        $isLocal = $berkas->storages()->where('type', 'local')->count();
-                        if ($isLocal > 0) {
-                            $gs->addInputFile('"'.storage_path() . '/app/'.$berkas->path.'"');
-                        }
+                        // $isLocal = $berkas->storages()->where('type', 'local')->count();
+                        // if ($isLocal > 0) {
+                        //     $gs->addInputFile('"'.storage_path() . '/app/'.$berkas->path.'"');
+                        // }
+                        $gs->addInputFile('"'.storage_path() . '/app/'.$berkas->path.'"');
                     }
                     $gs->setOutputFile($path . $file_name);
                     $gs->merge();
@@ -241,10 +298,11 @@ class SuratController extends Controller
             } else {
                 $zipArchive->addGlob($path .'tmp_'. $file_name);
                 foreach ($surat->berkas as $berkas) {
-                    $isLocal = $berkas->storages()->where('type', 'local')->count();
-                    if ($isLocal > 0) {
-                        $zipArchive->addGlob(storage_path() . '/app/'.$berkas->path);
-                    }
+                    // $isLocal = $berkas->storages()->where('type', 'local')->count();
+                    // if ($isLocal > 0) {
+                    //     $zipArchive->addGlob(storage_path() . '/app/'.$berkas->path);
+                    // }
+                    $zipArchive->addGlob(storage_path() . '/app/'.$berkas->path);
                 }
                 
                 if (!$zipArchive->status == ZIPARCHIVE::ER_OK){
@@ -300,6 +358,52 @@ class SuratController extends Controller
                 'status'=>$request->status,
                 'keterangan'=>$request->keterangan,
             ]);
+
+            if($request->status == "ditolak"){
+                NotificationHelper::createNotification($surat->user_id,'Surat : '.$surat->nomor_surat.'. Ditolak oleh '.Auth::user()->nama,'surat/'.$surat->id,"danger");
+                $_mp_id = $surat->disposisis()
+                ->whereNotNull('menunggu_persetujuan_id')
+                ->whereIn('role_id',auth()->user()->roles->pluck('id')->toArray())
+                ->where(function($w){
+                    $w->where('user_id',auth()->user()->id)->orWhere('user_id',0);
+                })->pluck('menunggu_persetujuan_id')->toArray();
+                foreach ($surat->disposisis()->whereIn('role_id',$_mp_id)->get() as $d) {
+                    if($d->user_id == 0){
+                        $users = User::whereHas('roles',function($wr)use($d){
+                            $wr->where('id',$d->role_id);
+                        })->get();
+    
+                        foreach ($users as $user) {
+                            NotificationHelper::createNotification($user->id,'Surat : '.$surat->nomor_surat.'. Ditolak oleh '.Auth::user()->nama,'surat/'.$surat->id,"danger");
+                        }
+                    } else {
+                        NotificationHelper::createNotification($d->user_id,'Surat : '.$surat->nomor_surat.'. Ditolak oleh '.Auth::user()->nama,'surat/'.$surat->id,"danger");
+                    }
+                }
+            }
+
+            if($request->status == "diterima"){
+                NotificationHelper::createNotification($surat->user_id,'Surat : '.$surat->nomor_surat.'. Diterima oleh '.Auth::user()->nama,'surat/'.$surat->id,"success");
+                foreach ($surat->disposisi_berikutnya as $db) {
+                    if($db->menunggu_persetujuan_id != null){
+                        $_cek = $surat->disposisis()->where('role_id',$db->menunggu_persetujuan_id)->where('status','diterima')->count();
+                        if($_cek <= 0){
+                            continue;
+                        }
+                    }
+                    if($db->user_id == 0){
+                        $users = User::whereHas('roles',function($wr)use($db){
+                            $wr->where('id',$db->role_id);
+                        })->get();
+    
+                        foreach ($users as $user) {
+                            NotificationHelper::createNotification($user->id,'Surat Masuk Perlu Disposisi : '.$surat->nomor_surat,'surat/'.$surat->id,"info");
+                        }
+                    } else {
+                        NotificationHelper::createNotification($db->user_id,'Surat Masuk Perlu Disposisi : '.$surat->nomor_surat,'surat/'.$surat->id,"info");
+                    }
+                }
+            }
     
             $_ditolak = SuratDisposisi::where('surat_id', $surat->id)->where('status','ditolak')->count();
             $_diterima = SuratDisposisi::where('surat_id', $surat->id)->where('status','diterima')->count();
@@ -319,7 +423,7 @@ class SuratController extends Controller
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal untuk melakukan disposisi');
+            return redirect()->back()->with('error', 'Gagal untuk melakukan disposisi. '.$th->getMessage())->withInput($request->all());
         }
         
         return redirect()->route('surat.index')->with('success', 'Surat berhasil di-disposisikan');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\UserLogHelper;
 use App\Models\GroupPermission;
 use App\Models\Role;
 use Illuminate\Http\Request;
@@ -57,6 +58,7 @@ class RoleController extends Controller
             ]);
             $permission_ids = $request->permission_ids;
             $role->permissions()->attach($permission_ids);
+            UserLogHelper::create('menambah data role baru dengan nama : '.$role->name);
             DB::commit();
             return redirect()->route('role.index')->with('success','Data berhasil disimpan');
         } catch (\Throwable $th) {
@@ -109,6 +111,7 @@ class RoleController extends Controller
             ]);
             $permission_ids = $request->permission_ids;
             $role->permissions()->sync($permission_ids);
+            UserLogHelper::create('mengubah role : '.$role->name);
             DB::commit();
             return redirect()->route('role.index')->with('success','Data berhasil disimpan');
         } catch (\Throwable $th) {
@@ -131,6 +134,7 @@ class RoleController extends Controller
         DB::beginTransaction();
         try {
             $role->delete();
+            UserLogHelper::create('mengahpus role : '.$role->name);
             DB::commit();
             return redirect()->route('role.index')->with('success','Data berhasil dihapus');
         } catch (\Throwable $th) {

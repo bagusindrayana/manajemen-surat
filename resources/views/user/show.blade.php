@@ -19,7 +19,7 @@
                             Nama : {{ $user->nama }}
                         </li>
                         <li>
-                            Nama : {{ $user->username }}
+                            Username : {{ $user->username }}
                         </li>
                         <li>
                             Role : {{ implode(",",$user->roles()->pluck('name')->toArray()) }}
@@ -42,7 +42,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($user->user_logs as $item)
+                            @foreach ($user->user_logs()->orderBy('created_at','DESC')->get() as $item)
                                 <tr>
                                     <td>
                                         {{ $loop->iteration }}

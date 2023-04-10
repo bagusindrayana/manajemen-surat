@@ -50,4 +50,9 @@ class User extends Authenticatable
         return $this->hasMany(UserLog::class);
     }
 
+    public function kontak_notifikasis()
+    {
+        return $this->hasMany(KontakNotifikasi::class);
+    }
+
 }

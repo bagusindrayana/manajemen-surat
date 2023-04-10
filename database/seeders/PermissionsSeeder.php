@@ -19,21 +19,18 @@ class PermissionsSeeder extends Seeder
             'Manage Role'=>[
                 'View Role',
                 'Create Role',
-                'Read Role',
                 'Update Role',
                 'Delete Role',
             ],
             'Manage User'=>[
                 'View User',
                 'Create User',
-                'Read User',
                 'Update User',
                 'Delete User',
             ],
             'Manage Surat'=>[
                 'View Surat',
                 'Create Surat',
-                'Read Surat',
                 'Update Surat',
                 'Delete Surat',
                 'Approve Surat',
@@ -42,7 +39,6 @@ class PermissionsSeeder extends Seeder
             'Manage Cloud Storage'=>[
                 'View Cloud Storage',
                 'Create Cloud Storage',
-                'Read Cloud Storage',
                 'Update Cloud Storage',
                 'Delete Cloud Storage',
             ],

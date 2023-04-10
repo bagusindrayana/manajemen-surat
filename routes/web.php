@@ -3,7 +3,9 @@
 use App\Http\Controllers\BerkasController;
 use App\Http\Controllers\CloudStorageController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LocalStorageController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SuratController;
 use App\Http\Controllers\UserController;
@@ -31,6 +33,7 @@ Route::group(['middleware'=>['auth']],function(){
     Route::resource('/role',RoleController::class);
     Route::resource('/cloud-storage',CloudStorageController::class);
     Route::resource('/surat',SuratController::class);
+    Route::get('local-storage',[LocalStorageController::class,'index'])->name('local-storage.index');
     Route::get('surat/{surat}/download-pdf',[SuratController::class,'downloadPdf'])->name('surat.download-pdf');
     Route::get('surat/{surat}/view-berkas/{berkas}',[SuratController::class,'viewBerkas'])->name('surat.view-berkas');
     Route::post('surat/{surat}/disposisi',[SuratController::class,'disposisi'])->name('surat.disposisi');
@@ -42,6 +45,7 @@ Route::group(['middleware'=>['auth']],function(){
 
     Route::group(['prefix'=>'ajax'],function(){
         Route::get('user-by-role/{role}',[SuratController::class,'getUserByRole'])->name('ajax.user-by-role');
+        Route::post('read-notification/{id}',[NotificationController::class,'readNotification'])->name('ajax.read-notification');
     });
 });
 

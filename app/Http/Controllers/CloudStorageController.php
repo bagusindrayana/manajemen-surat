@@ -73,6 +73,29 @@ class CloudStorageController extends Controller
                     ])
                 ]);
             }
+
+            if($request->type == "s3"){
+                $cs->update([
+                    'setting_json' => json_encode([
+                        'access_key_id' => $request->access_key_id,
+                        'secret_access_key' => $request->secret_access_key,
+                        'region' => $request->region,
+                        'bucket' => $request->bucket ?? 'us-east-1',
+                    ])
+                ]);
+            }
+
+            if($request->type == "ftp"){
+                $cs->update([
+                    'setting_json' => json_encode([
+                        'host' => $request->host,
+                        'port' => $request->port,
+                        'username' => $request->username,
+                        'password' => $request->password,
+                        'root' => $request->root,
+                    ])
+                ]);
+            }
             DB::commit();
             return redirect()->route('cloud-storage.index')->with('success','Storage berhasil dibuat');
         } catch (\Throwable $th) {

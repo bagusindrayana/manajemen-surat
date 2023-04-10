@@ -22,7 +22,7 @@
         </div>
         <div class="row">
             @php
-                $permissions = @$role->permissions->pluck('id')->toArray() ?? [];
+                $permissions = (isset($role))?@$role->permissions->pluck('id')->toArray():[];
             @endphp
             @foreach ($group->permissions as $permision)
                 <div class="col-md-3">

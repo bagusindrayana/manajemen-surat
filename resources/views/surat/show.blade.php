@@ -175,7 +175,7 @@
                         @if (@$cek->status == "belum")
                             <form action="{{ route('surat.disposisi',$surat->id) }}" method="POST">
                                 @csrf
-                                <textarea name="keterangan" id="keterangan" rows="5" class="form-control" placeholder="Keterangan tambahan..."></textarea>
+                                <textarea name="keterangan" id="keterangan" rows="5" class="form-control" placeholder="Keterangan tambahan...">{{ old('keterangan') }}</textarea>
                                 <div class="mt-2">
                                     <button type="submit" class="btn btn-success text-white" name="status" value="diterima"><i class="fa-solid fa-check-double"></i> Terima @if(count($disposisi_berikutnya) > 0) & Disposisikan @endif</button>
                                     <button type="submit" class="btn btn-danger text-white" name="status" value="ditolak"><i class="fa-solid fa-xmark"></i> Tolak & Kembalikan</button>

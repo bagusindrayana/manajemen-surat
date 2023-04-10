@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\UserLogHelper;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -58,11 +59,18 @@ class UserController extends Controller
             $user->nama = $request->nama;
             $user->username = $request->username;
             $user->password = bcrypt($request->password);
-            $user->email = $request->email;
-            $user->no_telp = $request->no_telp;
+            // $user->email = $request->email;
+            // $user->no_telp = $request->no_telp;
             $user->save();
+            foreach ($request->kontak ?? [] as $index => $kontak) {
+                $user->kontak_notifikasis()->create([
+                    'kontak'=>$kontak,
+                    'type'=>$request->type[$index]
+                ]);
+            }
             //asign role_id
             $user->roles()->attach($request->role_id);
+            UserLogHelper::create('menambah user baru dengan nama : '.$user->nama);
             DB::commit();
             return redirect()->route('user.index')->with('success','User berhasil ditambahkan');
         } catch (\Throwable $th) {
@@ -96,7 +104,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $data = [
-            'title'=>'Detail User',
+            'title'=>'Edit User',
             'user'=>$user,
             'roles'=>Role::all()
         ];
@@ -128,11 +136,19 @@ class UserController extends Controller
                 ]);
                 $user->password = bcrypt($request->password);
             }
-            $user->email = $request->email;
-            $user->no_telp = $request->no_telp;
+            // $user->email = $request->email;
+            // $user->no_telp = $request->no_telp;
             $user->save();
+            $user->kontak_notifikasis()->delete();
+            foreach ($request->kontak ?? [] as $index => $kontak) {
+                $user->kontak_notifikasis()->create([
+                    'kontak'=>$kontak,
+                    'type'=>$request->type[$index]
+                ]);
+            }
             //asign role_id
             $user->roles()->sync($request->role_id);
+            UserLogHelper::create('mengubah user : '.$user->nama);
             DB::commit();
             return redirect()->route('user.index')->with('success','User berhasil ubah');
         } catch (\Throwable $th) {
@@ -152,6 +168,7 @@ class UserController extends Controller
         DB::beginTransaction();
         try {
             $user->delete();
+            UserLogHelper::create('mengahpus user : '.$user->nama);
             DB::commit();
             return redirect()->route('user.index')->with('success','User berhasil dihapus');
         } catch (\Throwable $th) {
