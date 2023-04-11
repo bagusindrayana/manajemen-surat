@@ -91,24 +91,29 @@ class CloudStorage extends Model
                 break;
             case 'ftp':
                 $setting = $this->setting;
-                $storage = Storage::createFtpDriver([
-                    'driver' => 'ftp',
-                    'host'    => $setting->host,
-                    'port' => $setting->port,
-                    'username' => $setting->username,
-                    'password' => $setting->password,
-                    'root'=>$setting->root,
-                ]);
-                $storageFiles = $storage->files("_manajemen_surat/".Auth::user()->id);
-                foreach ($storageFiles as $sf) {
-                    $files[] = json_decode(json_encode([
-                        'name' => basename($sf),
-                        'size' => $storage->size($sf),
-                        'url' => '-',
-                        'createdTime' => $storage->lastModified($sf),
-                        'mimeType' => $storage->mimeType($sf),
-                    ]), FALSE);
-                }
+                    // $conn_id = ftp_connect("$setting->host");
+                    // dd(ftp_login($conn_id, $setting->username, $setting->password));
+                    $storage = Storage::createFtpDriver([
+                        'driver' => 'ftp',
+                        'host'    => $setting->host,
+                        'port' => (int)$setting->port,
+                        'username' => $setting->username,
+                        'password' => $setting->password,
+                        'pasive'=>true,
+                        'root'=>$setting->root,
+                    ]);
+                    
+                    $storageFiles = $storage->files("_manajemen_surat/".Auth::user()->id);
+                    foreach ($storageFiles as $sf) {
+                        $files[] = json_decode(json_encode([
+                            'name' => basename($sf),
+                            'size' => $storage->size($sf),
+                            'url' => '-',
+                            'createdTime' => $storage->lastModified($sf),
+                            'mimeType' => $storage->mimeType($sf),
+                        ]), FALSE);
+                    }
+                
                 break;
                 
             default:
@@ -156,7 +161,7 @@ class CloudStorage extends Model
         return $result;
     }
 
-    public function scopeUploadFile($q, $path)
+    public function scopeUploadFile($q, $path,$user_id)
     {
         $setting = $this->setting;
         $result = null;
@@ -190,11 +195,11 @@ class CloudStorage extends Model
                
                 break;
             case 'local':
-                $result = $_path = $setting->directory_name . '/' . Auth::user()->id . '/' . basename($path);
+                $result = $_path = $setting->directory_name . '/' . $user_id . '/' . basename($path);
                 Storage::move($path, $_path);
                 break;
             case 's3':
-                $result = $_path = '_manajemen_surat/' . Auth::user()->id . '/' . basename($path);
+                $result = $_path = '_manajemen_surat/' . $user_id . '/' . basename($path);
                 $storage = Storage::createS3Driver([
                     'driver' => 's3',
                     'key'    => $setting->access_key_id,
@@ -216,11 +221,11 @@ class CloudStorage extends Model
                 
                 break;
             case 'ftp':
-                $result = $_path = '_manajemen_surat/' . Auth::user()->id . '/' . basename($path);
+                $result = $_path = '_manajemen_surat/' . $user_id . '/' . basename($path);
                 $storage = Storage::createFtpDriver([
                     'driver' => 'ftp',
                     'host'    => $setting->host,
-                    'port' => $setting->port,
+                    'port' => (int)$setting->port,
                     'username' => $setting->username,
                     'password' => $setting->password,
                     'root'=>$setting->root,

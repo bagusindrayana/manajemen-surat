@@ -9,6 +9,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SuratController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -48,5 +49,24 @@ Route::group(['middleware'=>['auth']],function(){
         Route::post('read-notification/{id}',[NotificationController::class,'readNotification'])->name('ajax.read-notification');
     });
 });
+
+Route::get('clear-cache',function(){
+    Artisan::call('cache:clear');
+    Artisan::call('config:clear');
+    Artisan::call('config:cache');
+    Artisan::call('view:clear');
+    Artisan::call('route:clear');
+    Artisan::call('optimize:clear');
+    return "Cache is cleared";
+});
+
+Route::group(['prefix'=>'cron-job'],function(){
+    Route::get('queue',function(){
+        Artisan::call('queue:work --stop-when-empty');
+        return "Queue is working";
+    });
+});
+
+
 
 

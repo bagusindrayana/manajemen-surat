@@ -21,7 +21,7 @@
                 Setting</label></div>
         <div x-show="ubahSetting" id="type">
             <div class="mt-4 mb-4">
-                @include('cloud-storage.inputs.s3', ['ext' => '_edit', 'data' => $cloudStorage->setting])
+                @include('cloud-storage.inputs.'.$cloudStorage->type, ['ext' => '_edit', 'data' => $cloudStorage->setting])
             </div>
         </div>
         <p class="mt-4">Type : {{ $cloudStorage->type }} | {{ $cloudStorage->auth_name }}</p>
@@ -70,7 +70,7 @@
                 <p>Simpan berkas yang di upload ke penyimpanan lokal server</p>
                 <div class="mb-4">
                     <label for="directory_name">Nama Direktori</label>
-                    <input type="text" name="directory_name" required class="form-control" id="directory_name"
+                    <input type="text" name="directory_name" required class="form-control required" id="directory_name"
                         aria-describedby="directory_name" placeholder="Directory name..."
                         value="{{ old('directory_name', @$cloudStorage->setting->directory_name) }}">
 
@@ -139,7 +139,7 @@
                 @include('cloud-storage.inputs.ftp')
             </div>
             <div class="modal-footer">
-                <button name="type" type="submit" value="s3" class="btn btn-secondary">Accept</button>
+                <button name="type" type="submit" value="ftp" class="btn btn-secondary">Accept</button>
                 <button type="button" class="btn btn-link text-gray ms-auto" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
@@ -152,6 +152,9 @@
 
 @push('scripts')
     <script>
+        document.querySelectorAll('.modal .required').forEach(function(el) {
+            el.setAttribute('disabled', true);
+        });
         //listen change from input name
         document.getElementById('name').addEventListener('change', function() {
             //change value from input auth_name
@@ -159,6 +162,21 @@
             //replace whitespace with underscore and remove symbol
             var directory_name = name.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
             document.getElementById('directory_name').value = directory_name;
+        });
+
+        //add event to button with attribute data-bs-target
+        document.querySelectorAll('button[data-bs-target]').forEach(function(el) {
+            el.addEventListener('click', function() {
+                var modalId = this.getAttribute('data-bs-target');
+                document.querySelectorAll('.modal .required').forEach(function(el) {
+                    el.setAttribute('disabled', true);
+                });
+                //disable input with .required class inside modalId
+                document.querySelectorAll(modalId + ' .required').forEach(function(el) {
+                    //remove disabled attribute
+                    el.removeAttribute('disabled');
+                });
+            });
         });
     </script>
 @endpush

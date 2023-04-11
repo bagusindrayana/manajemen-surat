@@ -6,6 +6,7 @@ use App\Helpers\GhostscriptHelper;
 use App\Helpers\NotificationHelper;
 use App\Helpers\StorageHelper;
 use App\Helpers\UserLogHelper;
+use App\Jobs\UploadCloudStorage;
 use App\Models\Berkas;
 use App\Models\CloudStorage;
 use App\Models\Role;
@@ -67,7 +68,8 @@ class SuratController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
+    {   
+        $movedFiles = [];
         DB::beginTransaction();
         try {
             $surat = Surat::create([
@@ -106,51 +108,70 @@ class SuratController extends Controller
                 }
             }
 
-            $tmpFiles = StorageHelper::getTmpFiles();
-            $activeStorages = [];
-            if ($request->has('all_storage') && $request->all_storage == "true") {
+            // $tmpFiles = StorageHelper::getTmpFiles();
+            // $activeStorages = [];
+            // if ($request->has('all_storage') && $request->all_storage == "true") {
                 
-                $activeStorages = CloudStorage::where('status', 'active')->get();
+            //     $activeStorages = CloudStorage::where('status', 'active')->get();
                 
-            } else {
-                $activeStorages = CloudStorage::where('status', 'active')->whereIn('id',$request->cloud_storage_id)->get();
-            }
+            // } else {
+            //     $activeStorages = CloudStorage::where('status', 'active')->whereIn('id',$request->cloud_storage_id)->get();
+            // }
 
+            // foreach ($tmpFiles as $key => $tmpFile) {
+            //     $berkas = $surat->berkas()->create([
+            //         // 'storage_id'=>$activeStorage->id,
+            //         'nama_berkas' => $tmpFile['name'],
+            //         'path' => $tmpFile['path'],
+            //         'mime_type' => $tmpFile['mime_type'],
+            //         'size' => $tmpFile['size'],
+            //     ]);
+                
+                
+            //     foreach ($activeStorages as $key => $activeStorage) {
+            //         $uploadedResult = $activeStorage->uploadFile($tmpFile['path']);
+            //         $berkas->berkas_storages()->create([
+            //             'storage_id' => $activeStorage->id,
+            //             'berkas_id' => $berkas->id,
+            //             'path' => $uploadedResult,
+            //         ]);
+
+                    
+            //     }
+            //     $_path = 'surat/' . Auth::user()->id . '/' . basename($tmpFile['path']);
+            //     $berkas->update([
+            //         'path' => $_path
+            //     ]);
+            //     Storage::move($tmpFile['path'], $_path);
+            // }
+            $tmpFiles = StorageHelper::getTmpFiles();
             foreach ($tmpFiles as $key => $tmpFile) {
+                $_path = 'surat/' . Auth::user()->id . '/' . basename($tmpFile['path']);
                 $berkas = $surat->berkas()->create([
                     // 'storage_id'=>$activeStorage->id,
                     'nama_berkas' => $tmpFile['name'],
-                    'path' => $tmpFile['path'],
+                    'path' => $_path,
                     'mime_type' => $tmpFile['mime_type'],
                     'size' => $tmpFile['size'],
                 ]);
                 
-                
-                foreach ($activeStorages as $key => $activeStorage) {
-                    $uploadedResult = $activeStorage->uploadFile($tmpFile['path']);
-                    $berkas->berkas_storages()->create([
-                        'storage_id' => $activeStorage->id,
-                        'berkas_id' => $berkas->id,
-                        'path' => $uploadedResult,
-                    ]);
-
-                    
-                }
-                $_path = 'surat/' . Auth::user()->id . '/' . basename($tmpFile['path']);
-                $berkas->update([
-                    'path' => $_path
-                ]);
                 Storage::move($tmpFile['path'], $_path);
-
-
+                
+                $movedFiles[] = $_path;
             }
-
+            
             
             UserLogHelper::create('menambah surat baru dengan nomor : '.$surat->nomor_surat);
             DB::commit();
+            dispatch(new UploadCloudStorage($surat,$request->all(),Auth::user()->id));
             return redirect()->route('surat.index')->with('success', 'Surat berhasil ditambahkan');
         } catch (\Throwable $th) {
             DB::rollBack();
+            //check movedFiles
+            foreach ($movedFiles as $key => $movedFile) {
+                $np = str_replace('surat/','_tmp/',$movedFile);
+                Storage::move($movedFile,$np);
+            }
             return redirect()->back()->with('error', 'Surat gagal ditambahkan : ' . $th->getMessage())->withInput($request->all());
         }
     }
@@ -164,6 +185,7 @@ class SuratController extends Controller
     public function show(Surat $surat)
     {   
 
+        $stillUpload =  DB::table('jobs')->where('payload','like','%UploadCloudStorage%')->count() != 0;
         $disposisi_berikutnya = [];
         $cek = SuratDisposisi::where('surat_id', $surat->id)->where(function($w){
             $w->where(function($wu){
@@ -180,7 +202,8 @@ class SuratController extends Controller
             'surat' => $surat,
             'disposisi_berikutnya'=>$disposisi_berikutnya,
             'cek'=>$cek,
-            'title' => 'Detail Surat'
+            'title' => 'Detail Surat',
+            'stillUpload'=>$stillUpload
         ];
         return view('surat.show', $data);
     }
@@ -329,11 +352,9 @@ class SuratController extends Controller
 
     function viewBerkas(Surat $surat,Berkas $berkas)
     {
-        $isLocal = $berkas->storages()->where('type', 'local')->count();
-        if ($isLocal > 0) {
-            return response()->file(storage_path() . '/app/'.$berkas->path);
-        }
-        abort(404);
+        //$isLocal = $berkas->storages()->where('type', 'local')->count();
+        return response()->file(storage_path() . '/app/'.$berkas->path);
+        //abort(404);
     }
 
     public function disposisi(Request $request,Surat $surat)

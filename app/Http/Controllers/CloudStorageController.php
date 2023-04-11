@@ -176,6 +176,29 @@ class CloudStorageController extends Controller
             'type' => $request->ubah_type ? $request->type : $cloudStorage->type,
             'status' => $request->status
         ]);
+
+        if($cloudStorage->type == "s3"){
+            $cloudStorage->update([
+                'setting_json' => json_encode([
+                    'access_key_id' => $request->access_key_id,
+                    'secret_access_key' => $request->secret_access_key,
+                    'region' => $request->region,
+                    'bucket' => $request->bucket ?? 'us-east-1',
+                ])
+            ]);
+        }
+
+        if($cloudStorage->type == "ftp"){
+            $cloudStorage->update([
+                'setting_json' => json_encode([
+                    'host' => $request->host,
+                    'port' => $request->port,
+                    'username' => $request->username,
+                    'password' => $request->password,
+                    'root' => $request->root,
+                ])
+            ]);
+        }
         if ($request->type == "google") {
             return redirect()->route('login.google')->with('cs_id', $cloudStorage->id);
         }

@@ -21,6 +21,10 @@ class LoginController extends Controller
 
         if (auth()->attempt($credentials)) {
             // Authentication passed...
+            //check intended url
+            if ($request->session()->has('url.intended')) {
+                return redirect()->intended()->getTargetUrl();
+            }
             return redirect()->route('home');
         }
 

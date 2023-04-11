@@ -88,7 +88,9 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    Lampiran Surat/Berkas
+                    Lampiran Surat/Berkas <small><b>@if ($stillUpload)
+                        Upload Ke Cloud...
+                    @endif</b></small>
                 </div>
                 
                 <div class="card-body">
