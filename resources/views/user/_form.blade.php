@@ -157,7 +157,7 @@
     <script>
         function handler() {
             return {
-                fields: {!! json_encode(@$user->kontak_notifikasis->toArray() ?? []) !!} ||[],
+                fields: {!! json_encode((isset($user->kontak_notifikasis))?$user->kontak_notifikasis->toArray():[]) !!} || [],
                 addNewField(e) {
                     this.fields.push({
                         kontak: '',

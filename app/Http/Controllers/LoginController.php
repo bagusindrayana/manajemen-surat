@@ -23,7 +23,7 @@ class LoginController extends Controller
             // Authentication passed...
             //check intended url
             if ($request->session()->has('url.intended')) {
-                return redirect()->intended()->getTargetUrl();
+                return redirect()->intended();
             }
             return redirect()->route('home');
         }
@@ -66,19 +66,20 @@ class LoginController extends Controller
             if ($request->get('state') && $request->get('code')) {
                 $state = explode("|", $request->get('state'));
                 //create folder
-                $drive = Google::make('drive');
-                $drive->getClient()->setAccessType('offline');
-                $drive->getClient()->setApprovalPrompt("force");
+                
+                
                 $json = $oauth2->getClient()->getAccessToken();
+                
                 $json['code'] = $request->get('code');
                 $json['refresh_token'] = $oauth2->getClient()->getRefreshToken();
-                
-
-                // $drive->getClient()->setAccessToken($json['access_token']);
                 $optParams = array(
                     'fields' => 'nextPageToken, files(id, name, trashed, createdTime, modifiedTime)',
                     'q' => "trashed=false and name='_manajemen_surat'"
                 );
+                $drive = Google::make('drive');
+                $drive->getClient()->setAccessType('offline');
+                $drive->getClient()->setApprovalPrompt("force");
+                $drive->getClient()->setAccessToken($json['access_token']);
                 $CEK = $drive->files->listFiles($optParams)->files;
                 if(count($CEK)>0){
                     $folder = $CEK[0];

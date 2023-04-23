@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
 use PulkitJalan\Google\Facades\Google;
@@ -53,7 +54,7 @@ class CloudStorage extends Model
                     );
                     $files = $drive->files->listFiles($optParams)->files;
                 } catch (\Throwable $th) {
-                    dd($th);
+                    Log::error($th);
                 }
                 break;
             case 'local':

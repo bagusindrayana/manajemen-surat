@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\StorageHelper;
 use App\Models\CloudStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,7 +34,7 @@ class CloudStorageController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function create()
-    {   
+    {
         request()->session()->forget('token');
         request()->session()->forget('cs_id');
         return view('cloud-storage.create');
@@ -66,7 +67,7 @@ class CloudStorageController extends Controller
                 DB::commit();
                 return redirect()->route('login.google')->with('cs_id', $cs->id);
             }
-            if($request->type == "local"){
+            if ($request->type == "local") {
                 $cs->update([
                     'setting_json' => json_encode([
                         'directory_name' => $request->directory_name
@@ -74,7 +75,7 @@ class CloudStorageController extends Controller
                 ]);
             }
 
-            if($request->type == "s3"){
+            if ($request->type == "s3") {
                 $cs->update([
                     'setting_json' => json_encode([
                         'access_key_id' => $request->access_key_id,
@@ -85,7 +86,7 @@ class CloudStorageController extends Controller
                 ]);
             }
 
-            if($request->type == "ftp"){
+            if ($request->type == "ftp") {
                 $cs->update([
                     'setting_json' => json_encode([
                         'host' => $request->host,
@@ -97,13 +98,13 @@ class CloudStorageController extends Controller
                 ]);
             }
             DB::commit();
-            return redirect()->route('cloud-storage.index')->with('success','Storage berhasil dibuat');
+            return redirect()->route('cloud-storage.index')->with('success', 'Storage berhasil dibuat');
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
-            return redirect()->back()->with('error','Storage gagal dibuat')->withInput($request->all());
+            return redirect()->back()->with('error', 'Storage gagal dibuat')->withInput($request->all());
         }
-        
+
     }
 
     /**
@@ -114,10 +115,10 @@ class CloudStorageController extends Controller
      */
     public function show(CloudStorage $cloudStorage)
     {
-        
+
         $files = [];
 
-        if($cloudStorage->setting_json != null){
+        if ($cloudStorage->setting_json != null) {
             // $drive = Google::make('drive');
             // $drive->getClient()->setAccessType('offline');
             // $drive->getClient()->setApprovalPrompt("force");
@@ -130,14 +131,14 @@ class CloudStorageController extends Controller
             // );
             // $files = $drive->files->listFiles($optParams)->files;
             $files = $cloudStorage->listFiles;
-           
+
         }
 
         $data = [
             'cloudStorage' => $cloudStorage,
             'title' => 'Detail Cloud Storage',
-            'subtitle'=> 'Berkas-berkas yang sudah di upload ke storage ini',
-            'files'=>$files
+            'subtitle' => 'Berkas-berkas yang sudah di upload ke storage ini',
+            'files' => $files
         ];
         return view('cloud-storage.show', $data);
     }
@@ -153,7 +154,7 @@ class CloudStorageController extends Controller
         $data = [
             'cloudStorage' => $cloudStorage,
             'title' => 'Ubah Cloud Storage',
-            
+
         ];
         return view('cloud-storage.edit', $data);
     }
@@ -169,7 +170,7 @@ class CloudStorageController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'status'=>'required'
+            'status' => 'required'
         ]);
         $cloudStorage->update([
             'name' => $request->name,
@@ -177,7 +178,7 @@ class CloudStorageController extends Controller
             'status' => $request->status
         ]);
 
-        if($cloudStorage->type == "s3"){
+        if ($cloudStorage->type == "s3") {
             $cloudStorage->update([
                 'setting_json' => json_encode([
                     'access_key_id' => $request->access_key_id,
@@ -188,7 +189,7 @@ class CloudStorageController extends Controller
             ]);
         }
 
-        if($cloudStorage->type == "ftp"){
+        if ($cloudStorage->type == "ftp") {
             $cloudStorage->update([
                 'setting_json' => json_encode([
                     'host' => $request->host,
@@ -202,7 +203,7 @@ class CloudStorageController extends Controller
         if ($request->type == "google") {
             return redirect()->route('login.google')->with('cs_id', $cloudStorage->id);
         }
-        return redirect()->route('cloud-storage.index')->with('success','Storage berhasil dibuat');
+        return redirect()->route('cloud-storage.index')->with('success', 'Storage berhasil dibuat');
     }
 
     /**
@@ -212,16 +213,27 @@ class CloudStorageController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy(CloudStorage $cloudStorage)
-    {   
+    {
         DB::beginTransaction();
         try {
             $cloudStorage->delete();
+            if($cloudStorage->setting != null){
+                if($cloudStorage->setting->access_token != null){
+                    $oauth2 = Google::make('oauth2');
+                    $setting = StorageHelper::createRefreshToken($cloudStorage);
+                    $oauth2->getClient()->setAccessType('offline');
+                    $oauth2->getClient()->setApprovalPrompt("force");
+                    $oauth2->getClient()->setAccessToken($setting->access_token);
+                    //disconnect
+                    $oauth2->getClient()->revokeToken();
+                }
+            }
             DB::commit();
-            return redirect()->route('cloud-storage.index')->with('success','Storage berhasil dihapus');
+            return redirect()->route('cloud-storage.index')->with('success', 'Storage berhasil dihapus');
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
-            return redirect()->back()->with('error','Storage gagal dihapus');
+            return redirect()->back()->with('error', 'Storage gagal dihapus');
         }
     }
 }

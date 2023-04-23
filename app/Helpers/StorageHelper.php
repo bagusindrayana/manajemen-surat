@@ -47,17 +47,17 @@ class StorageHelper {
         $created = $setting->created;
         $created_1_hour = $created;
         //request new access token if expired
-        $drive = Google::make('drive');
-        if($expires_in < time()){
+        $oauth2 = Google::make('oauth2');
+        if($expires_in < time() && $setting->refresh_token != null){
             
-            $drive->getClient()->refreshToken($setting->refresh_token);
-            $_tmp = $drive->getClient()->getAccessToken();
+            $oauth2->getClient()->refreshToken($setting->refresh_token);
+            $_tmp = $oauth2->getClient()->getAccessToken();
             $_tmp['code'] = $setting->code;
             $_tmp['folder_id'] = $setting->folder_id;
 
             $setting = (object)$_tmp;
 
-            $setting->expires_in = $drive->getClient()->getAccessToken()['created'] + $drive->getClient()->getAccessToken()['expires_in'];
+            $setting->expires_in = $oauth2->getClient()->getAccessToken()['created'] + $oauth2->getClient()->getAccessToken()['expires_in'];
             $cloudStorage->update([
                 'setting_json' => json_encode($setting)
             ]);
