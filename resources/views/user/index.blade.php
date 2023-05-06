@@ -47,8 +47,8 @@
                                     </td>
                                     <td>
                                         <ul>
-                                            @foreach ($item->kontak_notifikasis as $item)
-                                                <li>{{$item->type}} : {{$item->kontak}}</li>
+                                            @foreach ($item->kontak_notifikasis as $kontak)
+                                                <li>{{$kontak->type}} : {{$kontak->kontak}}</li>
                                             @endforeach
                                         </ul>
                                     </td>

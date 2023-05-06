@@ -25,11 +25,19 @@
                             Role : {{ implode(",",$user->roles()->pluck('name')->toArray()) }}
                         </li>
                         <li>
+                            Kontak : 
+                            <ol>
+                                @foreach ($user->kontak_notifikasis as $item)
+                                    <li>{{$item->type}} : {{$item->kontak}}</li>
+                                @endforeach
+                            </ol>
+                        </li>
+                        {{-- <li>
                             Email : {{ $user->email }}
                         </li>
                         <li>
                             No Telp : {{ $user->no_telp }}
-                        </li>
+                        </li> --}}
                     </ul>
                     <p>User Log</p>
                     <table class="table table-centered table-nowrap mb-0 rounded">
