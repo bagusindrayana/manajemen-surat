@@ -27,8 +27,9 @@
                                 <th class="border-0 rounded-start">#</th>
                                 <th class="border-0">Nama</th>
                                 <th>Role/Jabatan</th>
-                                <th class="border-0">Email</th>
-                                <th class="border-0">No HP</th>
+                                <th>Kontak</th>
+                                {{-- <th class="border-0">Email</th>
+                                <th class="border-0">No HP</th> --}}
                                 <th class="border-0 rounded-end">Detail</th>
                             </tr>
                         </thead>
@@ -45,11 +46,18 @@
                                         {{ implode(",",$item->roles->pluck('name')->toArray() ?? []) }}
                                     </td>
                                     <td>
+                                        <ul>
+                                            @foreach ($item->kontak_notifikasis as $item)
+                                                <li>{{$item->type}} : {{$item->kontak}}</li>
+                                            @endforeach
+                                        </ul>
+                                    </td>
+                                    {{-- <td>
                                         {{ $item->email }}
                                     </td>
                                     <td>
                                         {{ $item->no_hp }}
-                                    </td>
+                                    </td> --}}
                                   
                                     <td>
                                         <a href="{{ route('user.show',$item->id) }}" class="btn btn-warning btn-sm"><i class="fas fa-eye"></i> Detail</a>

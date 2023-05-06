@@ -124,7 +124,7 @@
                                     <option value="email" x-bind:selected="field.type == 'email'">Email</option>
                                     <option value="wa" x-bind:selected="field.type == 'wa'">Whatsapp</option>
                                     <option value="telegram" x-bind:selected="field.type == 'telegram'">Telegram</option>
-                                    <option value="push" x-bind:selected="field.type == 'push'">Browser Notification</option>
+                                    {{-- <option value="push" x-bind:selected="field.type == 'push'">Browser Notification</option> --}}
                                 </select>
                             </td>
                             <td>
