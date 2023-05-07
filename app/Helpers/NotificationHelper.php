@@ -51,14 +51,16 @@ class NotificationHelper
             'url' => $url,
             'type' => $type
         ]);
+        $message = $notif->keterangan."\n".url($notif->url);
         foreach ($notif->user->kontak_notifikasis  as $key => $value) {
+            
             if($value->type == "wa"){
-                dispatch(new NotifWa($value->kontak,$notif->keterangan."\n".url($notif->url) ));
+                dispatch(new NotifWa($value->kontak,$message));
             }
 
             if($value->type == "email"){
                 
-                dispatch(new NotifEmail($value->kontak,$notif->keterangan));
+                dispatch(new NotifEmail($value->kontak,$message));
             }
         }
         return $notif;

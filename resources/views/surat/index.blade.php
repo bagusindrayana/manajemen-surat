@@ -1,5 +1,19 @@
 @extends('layouts.app')
 
+@push('scripts')
+@if (session('success'))
+<script>
+    //send fetch
+    fetch("{{ url('cron-job/queue') }}", {
+        method: "GET",
+        headers: {
+            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+        }
+    });
+</script>
+@endif
+@endpush
+
 @section('content')
     <div class="row">
         <div class="col-md-12">

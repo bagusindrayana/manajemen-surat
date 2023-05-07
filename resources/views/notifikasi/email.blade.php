@@ -8,6 +8,6 @@
 </head>
 <body>
     <h1>Notifikasi Disposisi Surat</h1>
-    <p>{{ @$_message }}</p>
+    <p>{!! @$_message !!}</p>
 </body>
 </html>
