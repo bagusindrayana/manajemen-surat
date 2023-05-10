@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Facade;
 
 return [
-
+    'public_path' => public_path(),
     /*
     |--------------------------------------------------------------------------
     | Application Name

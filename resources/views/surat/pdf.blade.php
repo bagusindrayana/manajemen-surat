@@ -80,6 +80,14 @@
                 </td>
             </tr>
         </table>
+        <br>
+        <br>
+        <p>Berkas Lampiran : </p>
+        <ol>
+            @foreach ($surat->berkas as $berkas)
+                <li>{{ $berkas->nama_berkas }}</li>
+            @endforeach
+        </ol>
     </div>
 </body>
 </html>
