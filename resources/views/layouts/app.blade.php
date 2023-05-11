@@ -23,13 +23,10 @@
   <!-- Primary Meta Tags -->
   <title>{{ env("APP_NAME") }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="title" content="Volt Premium Bootstrap Dashboard - Forms">
-  <meta name="author" content="Themesberg">
+  <meta name="title" content="SISTEM DISPOSISI SURAT">
+  <meta name="author" content="bagood">
   <meta name="description"
-    content="Volt Pro is a Premium Bootstrap 5 Admin Dashboard featuring over 800 components, 10+ plugins and 20 example pages using Vanilla JS.">
-  <meta name="keywords"
-    content="bootstrap 5, bootstrap, bootstrap 5 admin dashboard, bootstrap 5 dashboard, bootstrap 5 charts, bootstrap 5 calendar, bootstrap 5 datepicker, bootstrap 5 tables, bootstrap 5 datatable, vanilla js datatable, themesberg, themesberg dashboard, themesberg admin dashboard" />
-  <link rel="canonical" href="https://themesberg.com/product/admin-dashboard/volt-premium-bootstrap-5-dashboard">
+    content="SISTEM DISPOSISI SURAT KELURAHAN DADI MULYA">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">

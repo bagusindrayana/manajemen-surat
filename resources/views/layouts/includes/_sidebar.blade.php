@@ -76,26 +76,33 @@
                     </span>
                     <div class="multi-level collapse  {{ (request()->is('local-storage*') || request()->is('cloud-storage*') || request()->is('user*')) ? 'show' : '' }} " role="list" id="submenu-components" aria-expanded="false">
                         <ul class="flex-column nav">
-                            <li class="nav-item  {{ (request()->is('local-storage*')) ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('local-storage.index') }}">
-                                    <span class="sidebar-text">Local Storage</span>
-                                </a>
-                            </li>
-                            <li class="nav-item  {{ (request()->is('cloud-storage*')) ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('cloud-storage.index') }}">
-                                    <span class="sidebar-text">Cloud Storage</span>
-                                </a>
-                            </li>
-                            <li class="nav-item  {{ (request()->is('role*')) ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('role.index') }}">
-                                    <span class="sidebar-text">Role</span>
-                                </a>
-                            </li>
-                            <li class="nav-item  {{ (request()->is('user*')) ? 'active' : '' }}">
-                                <a class="nav-link" href="{{ route('user.index') }}">
-                                    <span class="sidebar-text">User</span>
-                                </a>
-                            </li>
+                            @can('View Cloud Storage')
+                                <li class="nav-item  {{ (request()->is('local-storage*')) ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('local-storage.index') }}">
+                                        <span class="sidebar-text">Local Storage</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item  {{ (request()->is('cloud-storage*')) ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('cloud-storage.index') }}">
+                                        <span class="sidebar-text">Cloud Storage</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            
+                            @can('View Role')
+                                <li class="nav-item  {{ (request()->is('role*')) ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('role.index') }}">
+                                        <span class="sidebar-text">Role</span>
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('View User')
+                                <li class="nav-item  {{ (request()->is('user*')) ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('user.index') }}">
+                                        <span class="sidebar-text">User</span>
+                                    </a>
+                                </li>
+                            @endcan
                         </ul>
                     </div>
                 </li>

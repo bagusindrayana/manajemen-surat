@@ -2,7 +2,8 @@
 
 @push('styles')
     <style>
-        table.lembar-disposisi, .lembar-disposisi td {
+        table.lembar-disposisi,
+        .lembar-disposisi td {
             border: 1px solid;
         }
 
@@ -17,17 +18,20 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <a href="{{ route('surat.index') }}" class="btn btn-primary mx-2"><i class="fas fa-angle-left"></i> Kembali</a>
+                    <a href="{{ route('surat.index') }}" class="btn btn-primary mx-2"><i class="fas fa-angle-left"></i>
+                        Kembali</a>
                     @if (Auth::user()->id == $surat->user_id)
-                        <a href="{{ route('surat.edit',$surat->id) }}" class="btn btn-warning mx-2"><i class="fas fa-edit"></i> Edit</a>
-                        <form action="{{ route('surat.destroy',$surat->id) }}" method="POST" class="d-inline mx-2">
+                        <a href="{{ route('surat.edit', $surat->id) }}" class="btn btn-warning mx-2"><i class="fas fa-edit"></i>
+                            Edit</a>
+                        <form action="{{ route('surat.destroy', $surat->id) }}" method="POST" class="d-inline mx-2">
                             @csrf
                             @method('DELETE')
                             <button class="btn btn-danger"><i class="fas fa-trash"></i> Hapus</button>
                         </form>
                     @endif
-                    
-                    <a href="{{ route('surat.download-pdf',$surat->id) }}" class="btn btn-success mx-2 text-white" target="_blank"><i class="fas fa-download"></i> Download PDF</a>
+
+                    <a href="{{ route('surat.download-pdf', $surat->id) }}" class="btn btn-success mx-2 text-white"
+                        target="_blank"><i class="fas fa-download"></i> Download PDF</a>
                 </div>
                 <div class="card-body">
                     <table class="w-100 lembar-disposisi">
@@ -38,22 +42,22 @@
                         </tr>
                         <tr>
                             <td colspan="3">
-                                Nomor Surat     :   {{ $surat->nomor_surat }}
+                                Nomor Surat : {{ $surat->nomor_surat }}
                             </td>
                         </tr>
                         <tr>
                             <td colspan="3">
-                                Tanggal Surat   :   {{ $surat->tanggal_surat }}
+                                Tanggal Surat : {{ $surat->tanggal_surat }}
                             </td>
                         </tr>
                         <tr>
                             <td colspan="3">
-                                Perihal         :   {{ $surat->perihal }}
+                                Perihal : {{ $surat->perihal }}
                             </td>
                         </tr>
                         <tr>
                             <td colspan="3">
-                                Sifat Surat     :   {{ $surat->sifat }}
+                                Sifat Surat : {{ $surat->sifat }}
                             </td>
                         </tr>
                         <tr>
@@ -63,7 +67,7 @@
                                 </h4>
                             </td>
                         </tr>
-                        
+
                         <tr>
                             <td colspan="3">
                                 <ul>
@@ -88,14 +92,16 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    Lampiran Surat/Berkas <small><b>@if ($stillUpload)
-                        Upload Ke Cloud...
-                    @endif</b></small>
+                    Lampiran Surat/Berkas <small><b>
+                            @if ($stillUpload)
+                                Upload Ke Cloud...
+                            @endif
+                        </b></small>
                 </div>
-                
+
                 <div class="card-body">
-                   
-                    
+
+
                     <table class="table table-centered table-nowrap mb-0 rounded">
                         <thead class="thead-light">
                             <tr>
@@ -122,9 +128,10 @@
                                         {{ StorageHelper::formatBytes($item->size) }}
                                     </td>
                                     <td>
-                                        <a href="{{ route('surat.view-berkas',[$surat->id,$item->id]) }}" target="_blank" class="btn btn-success text-white"><i class="fas fa-file"></i></a>
+                                        <a href="{{ route('surat.view-berkas', [$surat->id, $item->id]) }}" target="_blank"
+                                            class="btn btn-success text-white"><i class="fas fa-file"></i></a>
                                     </td>
-                                   
+
                                 </tr>
                             @endforeach
                         </tbody>
@@ -150,16 +157,17 @@
                                 <p><b>Disposisi</b></p>
                                 <br>
                                 <br>
-                                <u><b>{{ $item->user->nama??$item->role->name }}</b></u>
+                                <u><b>{{ $item->user->nama ?? $item->role->name }}</b></u>
                                 <br>
-                                @if ($item->status == "belum")
+                                @if ($item->status == 'belum')
                                     <span class="badge bg-warning">Belum</span>
                                 @endif
-                                @if ($item->status == "diterima")
+                                @if ($item->status == 'diterima')
                                     <span class="badge bg-success">Diterima</span>
                                 @endif
-                                @if ($item->status == "ditolak")
+                                @if ($item->status == 'ditolak')
                                     <span class="badge bg-danger">Ditolak</span>
+                                    <p>{{ $item->keterangan }}</p>
                                 @endif
                                 <br>
                             </div>
@@ -174,21 +182,28 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
-                        @if (@$cek->status == "belum")
-                            <form action="{{ route('surat.disposisi',$surat->id) }}" method="POST">
+                        @if (@$cek->status == 'belum')
+                            <form action="{{ route('surat.disposisi', $surat->id) }}" method="POST">
                                 @csrf
                                 <textarea name="keterangan" id="keterangan" rows="5" class="form-control" placeholder="Keterangan tambahan...">{{ old('keterangan') }}</textarea>
                                 <div class="mt-2">
-                                    <button type="submit" class="btn btn-success text-white" name="status" value="diterima"><i class="fa-solid fa-check-double"></i> Terima @if(count($disposisi_berikutnya) > 0) & Disposisikan @endif</button>
-                                    <button type="submit" class="btn btn-danger text-white" name="status" value="ditolak"><i class="fa-solid fa-xmark"></i> Tolak & Kembalikan</button>
+                                    <button type="submit" class="btn btn-success text-white" name="status"
+                                        value="diterima"><i class="fa-solid fa-check-double"></i> Terima @if (count($disposisi_berikutnya) > 0)
+                                            & Disposisikan
+                                        @endif
+                                    </button>
+                                    <button type="submit" class="btn btn-danger text-white" name="status"
+                                        value="ditolak"><i class="fa-solid fa-xmark"></i> Tolak & Kembalikan</button>
                                 </div>
                             </form>
-                        @elseif (@$cek->status == "ditolak")
-                        <p>Riwayat</p>
+                        @elseif (@$cek->status == 'ditolak')
+                            <p>Riwayat</p>
                             <ul>
                                 @foreach ($cek->riwayat_disposisis as $item)
                                     <li>
-                                        {{ $item->created_at->format('Y-m-d') }} - <span class="badge @if($item->status == 'ditolak') bg-danger @endif @if($item->status == 'diterima') bg-success @endif">{{ $item->status }}</span> - {{ $item->keterangan }}
+                                        {{ $item->created_at->format('Y-m-d') }} - <span
+                                            class="badge @if ($item->status == 'ditolak') bg-danger @endif @if ($item->status == 'diterima') bg-success @endif">{{ $item->status }}</span>
+                                        - {{ $item->keterangan }}
                                     </li>
                                 @endforeach
                             </ul>
@@ -197,7 +212,7 @@
                                 @csrf
                                 <textarea name="keterangan" id="keterangan" rows="5" class="form-control" placeholder="Keterangan tambahan..."></textarea>
                                 <div class="mt-2">
-                                    <button type="submit" class="btn btn-success text-white" name="status" value="diterima"><i class="fa-solid fa-check-double"></i> Terima @if(count($disposisi_berikutnya) > 0) & Disposisikan @endif</button>
+                                    <button type="submit" class="btn btn-success text-white" name="status" value="diterima"><i class="fa-solid fa-check-double"></i> Terima @if (count($disposisi_berikutnya) > 0) & Disposisikan @endif</button>
                                     <button type="submit" class="btn btn-danger text-white" name="status" value="ditolak"><i class="fa-solid fa-xmark"></i> Tolak & Kembalikan</button>
                                 </div>
                             </form> --}}
@@ -207,11 +222,11 @@
                             </p>
                             <ul>
                                 @foreach ($disposisi_berikutnya as $item)
-                                    <li>{{ $item->user->nama??$item->role->name }}</li>
+                                    <li>{{ $item->user->nama ?? $item->role->name }}</li>
                                 @endforeach
                             </ul>
                             <p>
-                                Ket : 
+                                Ket :
                             </p>
                             <p>
                                 {{ $cek->keterangan }}

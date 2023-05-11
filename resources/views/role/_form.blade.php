@@ -27,7 +27,7 @@
             @foreach ($group->permissions as $permision)
                 <div class="col-md-3">
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="permission_id" @if(in_array($permision->id,$permissions)) checked="checked" @endif value="{{ $permision->id }}" id="permission-{{ $permision->id }}"> 
+                        <input class="form-check-input" type="checkbox" name="permission_ids[]" @if(in_array($permision->id,$permissions)) checked="checked" @endif value="{{ $permision->id }}" id="permission-{{ $permision->id }}"> 
                         <label class="form-check-label" for="permission-{{ $permision->id }}" >{{ $permision->name }}</label>
                     </div>
                     
