@@ -68,7 +68,7 @@
                     <div class="row d-block d-xl-flex align-items-center">
 
                         <div class="col-12 col-xl-7 px-xl-0">
-                            <div class="d-none d-sm-block">
+                            <div class="d-sm-block">
                                 <h2 class="h5">Total Size</h2>
                                 <h3 class="fw-extrabold mb-1">
                                     {{ number_format($localDiskInfo['total'], 2) }} GB
@@ -88,7 +88,7 @@
                     <div class="row d-block d-xl-flex align-items-center">
 
                         <div class="col-12 col-xl-7 px-xl-0">
-                            <div class="d-none d-sm-block">
+                            <div class="d-sm-block">
                                 <h2 class="h5">Total Usage</h2>
                                 <h3 class="fw-extrabold mb-1">
                                     {{ number_format($localDiskInfo['used'], 2) }} GB
@@ -108,7 +108,7 @@
                     <div class="row d-block d-xl-flex align-items-center">
 
                         <div class="col-12 col-xl-7 px-xl-0">
-                            <div class="d-none d-sm-block">
+                            <div class="d-sm-block">
                                 <h2 class="h5">Total Available</h2>
                                 <h3 class="fw-extrabold mb-1">
                                     {{ number_format($localDiskInfo['free'], 2) }} GB

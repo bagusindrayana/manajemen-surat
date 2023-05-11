@@ -44,7 +44,7 @@
                     <div class="row d-block d-xl-flex align-items-center">
                        
                         <div class="col-12 col-xl-7 px-xl-0">
-                            <div class="d-none d-sm-block">
+                            <div class="d-sm-block">
                                 <h2 class="h5">Surat Masuk</h2>
                                 <h3 class="fw-extrabold mb-1">
                                     {{ $totalSuratMasuk }}
@@ -64,7 +64,7 @@
                     <div class="row d-block d-xl-flex align-items-center">
                        
                         <div class="col-12 col-xl-7 px-xl-0">
-                            <div class="d-none d-sm-block">
+                            <div class="d-sm-block">
                                 <h2 class="h5">Surat Masuk Selesai</h2>
                                 <h3 class="fw-extrabold mb-1">
                                     {{ $totalSuratMasukSelesai }}
@@ -84,7 +84,7 @@
                     <div class="row d-block d-xl-flex align-items-center">
                        
                         <div class="col-12 col-xl-7 px-xl-0">
-                            <div class="d-none d-sm-block">
+                            <div class="d-sm-block">
                                 <h2 class="h5">Surat Masuk Ditolak</h2>
                                 <h3 class="fw-extrabold mb-1">
                                     {{ $totalSuratMasukDitolak }}

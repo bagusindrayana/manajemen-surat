@@ -14,6 +14,61 @@
 @endpush
 
 @section('content')
+@foreach ($surat->berkas as $item)
+    <div class="modal fade" id="modal-cloud-list-{{ $item->id }}" tabindex="-1" role="dialog" aria-labelledby="modal-cloud-list" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered  modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="h6 modal-title">Cloud Storage Yang Tertaut Dengan Berkas Ini</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body table-responsive text-center">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    No
+                                </th>
+                                <th>
+                                    Storage
+                                </th>
+                                <th>
+                                    Type 
+                                </th>
+                                <th>
+                                    Link
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody >
+                            @foreach ($item->berkas_storages as $v)
+                                <tr>
+                                    <td>
+                                        {{ $loop->iteration }}
+                                    </td>
+                                    <td>
+                                        {{$v->storage->name}}
+                                    </td>
+                                    <td>
+                                        {{$v->storage->type}}
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('berkas-storage.view',$v->id) }}" class="btn btn-sm btn-info"><i class="fas fa-link"></i></a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    
+                    <button type="button" class="btn btn-link text-gray ms-auto" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endforeach
+
     <div class="row mb-4">
         <div class="col-md-12">
             <div class="card">
@@ -21,7 +76,8 @@
                     <a href="{{ route('surat.index') }}" class="btn btn-primary mx-2"><i class="fas fa-angle-left"></i>
                         Kembali</a>
                     @if (Auth::user()->id == $surat->user_id)
-                        <a href="{{ route('surat.edit', $surat->id) }}" class="btn btn-warning mx-2"><i class="fas fa-edit"></i>
+                        <a href="{{ route('surat.edit', $surat->id) }}" class="btn btn-warning mx-2"><i
+                                class="fas fa-edit"></i>
                             Edit</a>
                         <form action="{{ route('surat.destroy', $surat->id) }}" method="POST" class="d-inline mx-2">
                             @csrf
@@ -99,7 +155,7 @@
                         </b></small>
                 </div>
 
-                <div class="card-body">
+                <div class="card-body table-responsive">
 
 
                     <table class="table table-centered table-nowrap mb-0 rounded">
@@ -130,6 +186,8 @@
                                     <td>
                                         <a href="{{ route('surat.view-berkas', [$surat->id, $item->id]) }}" target="_blank"
                                             class="btn btn-success text-white"><i class="fas fa-file"></i></a>
+                                        <button type="button" data-bs-toggle="modal" data-bs-target="#modal-cloud-list-{{ $item->id }}"
+                                            class="btn btn-info text-white"><i class="fas fa-cloud"></i></button>
                                     </td>
 
                                 </tr>

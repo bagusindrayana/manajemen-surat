@@ -61,7 +61,6 @@
     <!-- Volt CSS -->
     <link type="text/css" href="{{ url('/') }}/css/volt.css" rel="stylesheet">
 
-    <!-- NOTICE: You can use the _analytics.html partial to include production code specific code & trackers -->
 
 </head>
 

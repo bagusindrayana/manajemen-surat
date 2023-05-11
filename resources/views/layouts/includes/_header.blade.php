@@ -271,17 +271,21 @@
 
 
         //hover listener to .notifikasi
-        document.querySelector('.notifikasi').addEventListener('mouseover', function() {
-          //get data-id
-          var id = this.getAttribute('data-id');
+        var cek = document.querySelector('.notifikasi');
+        if(cek != null){
+          document.querySelector('.notifikasi').addEventListener('mouseover', function() {
+            //get data-id
+            var id = this.getAttribute('data-id');
 
-          //send POST request using xhr
-          var xhr = new XMLHttpRequest();
-          xhr.open('POST', urlNotification+id, true);
-          xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-          xhr.send();
-          
+            //send POST request using xhr
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', urlNotification+id, true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.send();
+            
 
-        });
+          });
+        }
+        
       </script>
   @endpush

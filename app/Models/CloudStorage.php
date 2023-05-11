@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\StorageHelper;
+use Bagusindrayana\LaravelFilter\Traits\LaravelFilter;
 use Google\Service\Drive\DriveFile;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ use PulkitJalan\Google\Facades\Google;
 
 class CloudStorage extends Model
 {
-    use HasFactory;
+    use HasFactory,LaravelFilter;
 
     protected $fillable = [
         'user_id',
@@ -24,12 +25,67 @@ class CloudStorage extends Model
         'type',
         'setting_json',
         'status',
+        'personal'
     ];
+
+    protected $filterFields = [
+        [
+            'user'=>[
+                'nama'
+            ]
+        ],
+        'name',
+        'auth_name',
+        'type',
+        'status',
+        'personal'
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function getSettingAttribute()
     {
         //string to json to object
         return json_decode($this->setting_json);
+    }
+
+    public function getDriverAttribute()
+    {   
+        $setting = $this->setting;
+        $driver = null;
+        switch ($this->type) {
+            case 'google':
+                $driver = Google::make('drive');
+                break;
+            case 'ftp':
+                $driver = Storage::createFtpDriver([
+                    'driver' => 'ftp',
+                    'host'    => $setting->host,
+                    'port' => (int)$setting->port,
+                    'username' => $setting->username,
+                    'password' => $setting->password,
+                    'root'=>$setting->root,
+                ]);
+                break;
+            case 's3':
+                $driver = Storage::createS3Driver([
+                    'driver' => 's3',
+                    'key'    => $setting->access_key_id,
+                    'secret' => $setting->secret_access_key,
+                    'region' => $setting->region ?? 'us-east-1',
+                    'bucket' => $setting->bucket,
+                    'endpoint'=>$setting->endpoint,
+                ]);
+                break;
+            default:
+                $driver = null;
+                break;
+        }
+
+        return $driver;
     }
 
     public function getListFilesAttribute()
@@ -42,7 +98,7 @@ class CloudStorage extends Model
             case 'google':
 
                 try {
-                    $drive = Google::make('drive');
+                    $drive = $this->driver;
                     $setting = StorageHelper::createRefreshToken($this);
                     $drive->getClient()->setAccessType('offline');
                     $drive->getClient()->setApprovalPrompt("force");
@@ -70,15 +126,8 @@ class CloudStorage extends Model
                 }
                 break;
             case 's3':
-                $setting = $this->setting;
-                $storage = Storage::createS3Driver([
-                    'driver' => 's3',
-                    'key'    => $setting->access_key_id,
-                    'secret' => $setting->secret_access_key,
-                    'region' => $setting->region ?? 'us-east-1',
-                    'bucket' => $setting->bucket,
-                    'endpoint'=>$setting->endpoint,
-                ]);
+          
+                $storage = $this->driver;
                 $storageFiles = $storage->files("_manajemen_surat/".Auth::user()->id);
                 foreach ($storageFiles as $sf) {
                     $files[] = json_decode(json_encode([
@@ -91,18 +140,8 @@ class CloudStorage extends Model
                 }
                 break;
             case 'ftp':
-                $setting = $this->setting;
-                    // $conn_id = ftp_connect("$setting->host");
-                    // dd(ftp_login($conn_id, $setting->username, $setting->password));
-                    $storage = Storage::createFtpDriver([
-                        'driver' => 'ftp',
-                        'host'    => $setting->host,
-                        'port' => (int)$setting->port,
-                        'username' => $setting->username,
-                        'password' => $setting->password,
-                        'pasive'=>true,
-                        'root'=>$setting->root,
-                    ]);
+                
+                    $storage = $this->driver;
                     
                     $storageFiles = $storage->files("_manajemen_surat/".Auth::user()->id);
                     foreach ($storageFiles as $sf) {
@@ -164,11 +203,11 @@ class CloudStorage extends Model
 
     public function scopeUploadFile($q, $path,$user_id)
     {
-        $setting = $this->setting;
+        
         $result = null;
         switch ($this->type) {
             case 'google':
-
+                $setting = $this->setting;
                 $drive = Google::make('drive');
                 $setting = StorageHelper::createRefreshToken($this);
                 $drive->getClient()->setAccessType('offline');
@@ -201,14 +240,7 @@ class CloudStorage extends Model
                 break;
             case 's3':
                 $result = $_path = '_manajemen_surat/' . $user_id . '/' . basename($path);
-                $storage = Storage::createS3Driver([
-                    'driver' => 's3',
-                    'key'    => $setting->access_key_id,
-                    'secret' => $setting->secret_access_key,
-                    'region' => $setting->region ?? 'us-east-1',
-                    'bucket' => $setting->bucket,
-                    'endpoint'=>$setting->endpoint,
-                ]);
+                $storage = $this->driver;
                 try {
                     $content = Storage::get($path);
                     $cek = $storage->put($_path, $content);
@@ -223,14 +255,7 @@ class CloudStorage extends Model
                 break;
             case 'ftp':
                 $result = $_path = '_manajemen_surat/' . $user_id . '/' . basename($path);
-                $storage = Storage::createFtpDriver([
-                    'driver' => 'ftp',
-                    'host'    => $setting->host,
-                    'port' => (int)$setting->port,
-                    'username' => $setting->username,
-                    'password' => $setting->password,
-                    'root'=>$setting->root,
-                ]);
+                $storage = $this->driver;
                 try {
                     $content = Storage::get($path);
                     $cek = $storage->put($_path, $content);

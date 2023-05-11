@@ -50,6 +50,8 @@ Route::group(['middleware'=>['auth']],function(){
     });
 });
 
+Route::get('berkas-storage/{berkas_storage_id}',[BerkasStorageController::class,'view'])->name('berkas-storage.view');
+
 Route::get('clear-cache',function(){
     Artisan::call('cache:clear');
     Artisan::call('config:clear');

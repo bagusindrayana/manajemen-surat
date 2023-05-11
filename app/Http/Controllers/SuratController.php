@@ -365,8 +365,14 @@ class SuratController extends Controller
     function viewBerkas(Surat $surat, Berkas $berkas)
     {
         //$isLocal = $berkas->storages()->where('type', 'local')->count();
-        return response()->file(storage_path() . '/app/' . $berkas->path);
-        //abort(404);
+        $cek = Storage::exists($berkas->path);
+        if ($cek) {
+            $get = Storage::get($berkas->path);
+            $mime = Storage::mimeType($berkas->path);
+            return response($get)->header('Content-Type', $mime);
+        }
+        
+        abort(404);
     }
 
     public function disposisi(Request $request, Surat $surat)

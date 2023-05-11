@@ -20,7 +20,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-6 py-2">
                             <form action="">
                                 <div class="input-group">
                                     <input type="text" name="search" class="form-control" placeholder="Cari {{ @$title }}..." value="{{ request()->search }}">
@@ -28,13 +28,13 @@
                                 </div>
                             </form>
                         </div>
-                        <div class="col-md-6 text-end">
+                        <div class="col-md-6 text-end py-2">
                             <a href="{{ route('surat.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah</a>
                         </div>
                     </div>
                     
                 </div>
-                <div class="card-body">
+                <div class="card-body table-responsive">
                     <table class="table table-centered table-nowrap mb-0 rounded">
                         <thead class="thead-light">
                             <tr>

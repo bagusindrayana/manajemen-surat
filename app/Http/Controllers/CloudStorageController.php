@@ -18,7 +18,7 @@ class CloudStorageController extends Controller
      */
     public function index()
     {
-        $cloudStorages = CloudStorage::paginate(10);
+        $cloudStorages = CloudStorage::where('personal',false)->filtersInput(null, 'search')->orderBy('created_at', 'desc')->paginate(10);
         $data = [
             'cloudStorages' => $cloudStorages,
             'title' => 'Cloud Storage'

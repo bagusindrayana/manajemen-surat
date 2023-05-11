@@ -1,3 +1,37 @@
+<div class="modal fade" id="modal-scan-dokumen" tabindex="-1" role="dialog" aria-labelledby="modal-scan-dokumen" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered  modal-fullscreen" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="h6 modal-title">Buka Kamera & Scan Dokumen Untuk Di Upload</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="row">
+                    <div class="col-md-12">
+                        <video id="video" height="300"></video> 
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="canvas" style="width: 100%;display: block;"></canvas>
+                        <!-- original video -->
+                    </div>
+                    <div class="col-md-6">
+                        
+                        <canvas id="result"  style="width: 100%;display: block;"></canvas>
+                        <!-- highlighted video -->
+                    </div>
+                </div>
+                
+                <div id="result-scan"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-info" id="save-scan">Scan Dokumen</button>
+                <button type="button" class="btn btn-link text-gray ms-auto" data-bs-dismiss="modal" id="close-scan">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="row">
     <div class="col-lg-6 col-md-12 mb-4">
         <div class="card">
@@ -68,7 +102,7 @@
     <div class="col-lg-6 col-md-12 mb-4">
         <div class="card mb-4">
             <div class="card-header">
-                <p>Berkas Surat/Lampiran</p>
+                <span>Berkas Surat/Lampiran </span> <button class="btn btn-info btn-sm" type="button" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#modal-scan-dokumen" id="open-modal-scan-dokumen"><i class="fas fa-camera"> Scan Dokumen</i></button>
             </div>
             <div class="card-body">
                 <div id="my-awesome-dropzone" class="dropzone">
@@ -114,7 +148,7 @@
             <div class="card-header">
                 <p>Disposisi Surat</p>
             </div>
-            <div class="card-body" x-data="handler()">
+            <div class="card-body table-responsive" x-data="handler()">
                 <table class="table table-centered table-nowrap mb-0 rounded">
                     <thead class="thead-light">
                         <tr>
@@ -250,6 +284,7 @@
         const tmpFiles = {!! json_encode($tmpFiles) !!}
         // A quick way setup
         var myDropzone = new Dropzone("#my-awesome-dropzone", {
+            dictDefaultMessage: "Klik bagian ini untuk memilih file atau Drag & Drop file disini",
             // Setup chunking
             url: "/berkas/upload",
             chunking: true,
@@ -406,5 +441,50 @@
                 }
             }
         }
+    </script>
+
+    <script src="https://docs.opencv.org/4.7.0/opencv.js" async></script>
+    <!-- warning: loading OpenCV can take some time. Load asynchronously -->
+    <script src="https://cdn.jsdelivr.net/gh/ColonelParrot/jscanify@master/src/jscanify.min.js"></script>
+
+    <script>
+        const scanner = new jscanify();
+        const canvasCtx = canvas.getContext("2d");
+        const resultCtx = result.getContext("2d");
+        let pause = false;
+        document.getElementById('open-modal-scan-dokumen').addEventListener('click', function() {
+            pause = false;
+            console.log('open modal scan dokumen');
+            
+            navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+
+                    setInterval(() => {
+                        if(pause) return;
+                        canvasCtx.drawImage(video, 0, 0,canvas.width, canvas.height);
+                        const resultCanvas = scanner.highlightPaper(canvas);
+                        resultCtx.drawImage(resultCanvas, 0, 0,result.width, result.height);
+                    }, 10);
+                };
+            });
+        });
+
+        document.getElementById("save-scan").addEventListener('click', function() {
+            pause = true;
+            console.log('close modal scan dokumen');
+  
+            video.pause();
+            video.srcObject = null;
+            // const paperWidth = 300;
+            // const paperHeight = 500;   
+            canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+            resultCtx.clearRect(0, 0, result.width, result.height);
+            navigator.mediaDevices.getUserMedia({ video: false });
+            const resultCanvas = scanner.extractPaper(canvas, canvas.width, canvas.height);
+            document.getElementById("result-scan").appendChild(resultCanvas);
+            
+        });
     </script>
 @endpush
