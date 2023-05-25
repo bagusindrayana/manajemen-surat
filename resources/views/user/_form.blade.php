@@ -92,7 +92,7 @@
 <div class="col-md-6">
     <div class="card">
         <div class="card-header">
-            <p>Kontak User</p>
+            <p>Kontak User Untuk Menerima Notifikasi</p>
         </div>
         <div class="card-body" x-data="handler()">
             <table class="table">
