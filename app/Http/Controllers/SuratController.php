@@ -30,8 +30,17 @@ class SuratController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {
-        $surats = Surat::filtersInput(null, 'search')->orderBy('created_at', 'desc')->paginate(10);
+    {   
+        $surats = Surat::filtersInput(null, 'search');
+        if(!auth()->user()->can('View All Surat')){
+            $surats = $surats->where(function($w){
+                $w->where('user_id', auth()->user()->id)
+                ->orWhereHas('disposisis',function($wd){
+                    $wd->where('user_id', auth()->user()->id);
+                })->orWhere('pemeriksa_id', auth()->user()->id);
+            });
+        }
+        $surats = $surats->orderBy('created_at', 'desc')->paginate(10)->appends(request()->input());
         $data = [
             'surats' => $surats,
             'title' => 'Surat'
@@ -48,6 +57,11 @@ class SuratController extends Controller
     {
         $tmpFiles = StorageHelper::getTmpFiles();
         $users = User::where('id', '!=', auth()->user()->id)->get();
+        $userPemeriksa = User::where('id', '!=', auth()->user()->id)->whereHas('roles', function ($q) {
+            $q->whereHas('permissions', function ($q) {
+                $q->where('name', 'Check Surat');
+            });
+        })->get();
         $roles = Role::all();
         $storages = CloudStorage::where('status', 'active')->get();
         $data = [
@@ -55,7 +69,8 @@ class SuratController extends Controller
             'tmpFiles' => $tmpFiles,
             'users' => $users,
             'roles' => $roles,
-            'storages' => $storages
+            'storages' => $storages,
+            'userPemeriksa'=>$userPemeriksa
         ];
 
 
@@ -71,6 +86,14 @@ class SuratController extends Controller
     public function store(Request $request)
     {
         $movedFiles = [];
+        $request->validate([
+            'nomor_surat' => 'required',
+            'tanggal_surat' => 'required',
+            'perihal' => 'required',
+            'sifat' => 'required',
+            'isi' => 'required',
+            'pemeriksa_id' => 'required',
+        ]);
         DB::beginTransaction();
         try {
             $surat = Surat::create([
@@ -80,70 +103,41 @@ class SuratController extends Controller
                 'perihal' => $request->perihal,
                 'sifat' => $request->sifat,
                 'isi' => $request->isi,
+                'pemeriksa_id'=>$request->pemeriksa_id,
+                'status'=>'diperiksa'
             ]);
-            foreach ($request->user_id as $key => $user_id) {
-                $role_id = $request->role_id[$key];
-                $surat->disposisis()->create([
-                    'user_id' => $user_id,
-                    'role_id' => $role_id,
-                    'menunggu_persetujuan_id' => $request->menunggu_persetujuan_id[$key],
-                    'keterangan' => $request->keterangan[$key],
-                ]);
-                if ($request->menunggu_persetujuan_id[$key] != null) {
-                    continue;
-                }
-                $type = "info";
-                if ($request->sifat != "biasa") {
-                    $type = "warning";
-                }
-                if ($user_id == 0) {
-                    $users = User::whereHas('roles', function ($wr) use ($role_id) {
-                        $wr->where('id', $role_id);
-                    })->get();
-
-                    foreach ($users as $user) {
-                        NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Disposisi : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
-                    }
-                } else {
-                    NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Disposisi : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
-                }
+            $user_id = $request->pemeriksa_id;
+            $type = "info";
+            if ($request->sifat != "biasa") {
+                $type = "warning";
             }
-
-            // $tmpFiles = StorageHelper::getTmpFiles();
-            // $activeStorages = [];
-            // if ($request->has('all_storage') && $request->all_storage == "true") {
-
-            //     $activeStorages = CloudStorage::where('status', 'active')->get();
-
-            // } else {
-            //     $activeStorages = CloudStorage::where('status', 'active')->whereIn('id',$request->cloud_storage_id)->get();
-            // }
-
-            // foreach ($tmpFiles as $key => $tmpFile) {
-            //     $berkas = $surat->berkas()->create([
-            //         // 'storage_id'=>$activeStorage->id,
-            //         'nama_berkas' => $tmpFile['name'],
-            //         'path' => $tmpFile['path'],
-            //         'mime_type' => $tmpFile['mime_type'],
-            //         'size' => $tmpFile['size'],
+            NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Di Periksa Untuk Disposisi : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
+            // foreach ($request->user_id as $key => $user_id) {
+            //     $role_id = $request->role_id[$key];
+            //     $surat->disposisis()->create([
+            //         'user_id' => $user_id,
+            //         'role_id' => $role_id,
+            //         'menunggu_persetujuan_id' => $request->menunggu_persetujuan_id[$key],
+            //         'keterangan' => $request->keterangan[$key],
             //     ]);
-
-
-            //     foreach ($activeStorages as $key => $activeStorage) {
-            //         $uploadedResult = $activeStorage->uploadFile($tmpFile['path']);
-            //         $berkas->berkas_storages()->create([
-            //             'storage_id' => $activeStorage->id,
-            //             'berkas_id' => $berkas->id,
-            //             'path' => $uploadedResult,
-            //         ]);
-
-
+            //     if ($request->menunggu_persetujuan_id[$key] != null) {
+            //         continue;
             //     }
-            //     $_path = 'surat/' . Auth::user()->id . '/' . basename($tmpFile['path']);
-            //     $berkas->update([
-            //         'path' => $_path
-            //     ]);
-            //     Storage::move($tmpFile['path'], $_path);
+            //     $type = "info";
+            //     if ($request->sifat != "biasa") {
+            //         $type = "warning";
+            //     }
+            //     if ($user_id == 0) {
+            //         $users = User::whereHas('roles', function ($wr) use ($role_id) {
+            //             $wr->where('id', $role_id);
+            //         })->get();
+
+            //         foreach ($users as $user) {
+            //             NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Disposisi : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
+            //         }
+            //     } else {
+            //         NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Disposisi : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
+            //     }
             // }
             $tmpFiles = StorageHelper::getTmpFiles();
             foreach ($tmpFiles as $key => $tmpFile) {
@@ -195,16 +189,20 @@ class SuratController extends Controller
                 $wr->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray())->where('user_id', 0);
             });
         })->first();
-        if ($cek == null && $surat->user_id != auth()->user()->id) {
+        if ($cek == null && auth()->user()->id != $surat->user_id && $surat->status != "diperiksa") {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melakukan disposisi');
         }
         $disposisi_berikutnya = SuratDisposisi::where('surat_id', $surat->id)->whereIn('menunggu_persetujuan_id', auth()->user()->roles->pluck('id')->toArray())->get();
+        $users = User::where('id', '!=', auth()->user()->id)->get();
+        $roles = Role::all();
         $data = [
             'surat' => $surat,
             'disposisi_berikutnya' => $disposisi_berikutnya,
             'cek' => $cek,
             'title' => 'Detail Surat',
-            'stillUpload' => $stillUpload
+            'stillUpload' => $stillUpload,
+            'roles'=>$roles,
+            'users'=>$users,
         ];
         return view('surat.show', $data);
     }
@@ -244,11 +242,12 @@ class SuratController extends Controller
         try {
             $berkas = $surat->berkas;
             foreach ($berkas as $b) {
-                foreach ($b->storages as $s) {
-                    if ($s->type == "local") {
-                        Storage::delete($b->path);
-                    }
-                }
+                Storage::delete($b->path);
+                // foreach ($b->storages as $s) {
+                //     if ($s->type == "local") {
+                //         Storage::delete($b->path);
+                //     }
+                // }
             }
             $surat->disposisis()->delete();
             $surat->delete();

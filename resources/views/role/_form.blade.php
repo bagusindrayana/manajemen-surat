@@ -49,9 +49,11 @@
 @push('scripts')
     <script>
         const pilihSemua = document.getElementById('pilih_semua');
+       
         //add event listener
         pilihSemua.addEventListener('change', function(e){
-            const checkboxes = document.querySelectorAll('input[name="permission_id"]');
+            console.log("test")
+            const checkboxes = document.querySelectorAll('input[name="permission_ids[]"]');
             checkboxes.forEach((checkbox) => {
                 checkbox.checked = e.target.checked;
             });

@@ -8,6 +8,7 @@
                     <a href="{{ route('role.index') }}" class="btn btn-primary mx-2"><i class="fas fa-angle-left"></i> Kembali</a>
                     <a href="{{ route('role.edit',@$role->id) }}" class="btn btn-warning mx-2"><i class="fas fa-edit"></i> Edit</a>
                     <form action="{{ route('role.destroy',$role->id) }}" method="POST" class="d-inline mx-2">
+                        @csrf
                         @method('DELETE')
                         <button class="btn btn-danger"><i class="fas fa-trash"></i> Hapus</button>
                     </form>

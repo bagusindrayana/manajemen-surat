@@ -30,11 +30,13 @@ class PermissionsSeeder extends Seeder
             ],
             'Manage Surat'=>[
                 'View Surat',
+                'View All Surat',
                 'Create Surat',
                 'Update Surat',
                 'Delete Surat',
                 'Approve Surat',
                 'Disposition Surat',
+                'Check Surat'
             ],
             'Manage Cloud Storage'=>[
                 'View Cloud Storage',

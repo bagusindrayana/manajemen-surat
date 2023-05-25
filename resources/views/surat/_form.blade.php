@@ -1,4 +1,4 @@
-<div class="modal fade" id="modal-scan-dokumen" tabindex="-1" role="dialog" aria-labelledby="modal-scan-dokumen" aria-hidden="true">
+{{-- <div class="modal fade" id="modal-scan-dokumen" tabindex="-1" role="dialog" aria-labelledby="modal-scan-dokumen" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered  modal-fullscreen" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -31,7 +31,7 @@
             </div>
         </div>
     </div>
-</div>
+</div> --}}
 <div class="row">
     <div class="col-lg-6 col-md-12 mb-4">
         <div class="card">
@@ -102,7 +102,8 @@
     <div class="col-lg-6 col-md-12 mb-4">
         <div class="card mb-4">
             <div class="card-header">
-                <span>Berkas Surat/Lampiran </span> <button class="btn btn-info btn-sm" type="button" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#modal-scan-dokumen" id="open-modal-scan-dokumen"><i class="fas fa-camera"> Scan Dokumen</i></button>
+                <span>Berkas Surat/Lampiran </span> 
+                {{-- <button class="btn btn-info btn-sm" type="button" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#modal-scan-dokumen" id="open-modal-scan-dokumen"><i class="fas fa-camera"> Scan Dokumen</i></button> --}}
             </div>
             <div class="card-body">
                 <div id="my-awesome-dropzone" class="dropzone">
@@ -144,93 +145,113 @@
 
 <div class="row">
     <div class="col-md-12">
-        <div class="card">
+        <div class="card mb-4">
             <div class="card-header">
-                <p>Disposisi Surat</p>
+                <p>Pemeriksa Surat</p>
             </div>
-            <div class="card-body table-responsive" x-data="handler()">
-                <table class="table table-centered table-nowrap mb-0 rounded">
-                    <thead class="thead-light">
-                        <tr>
-                            <th colspan="2">
-                                Disposisi Ke (Jabatan/User)
-                            </th>
-                            <th>
-                                Keterangan
-                            </th>
-                            <th>
-                                Menunggu Di Setujui <i
-                                    title="apakah pengiriman disposisi ini harus menunggu persetujuan user lainnya ?"
-                                    class="fa-regular fa-circle-question " style="cursor: pointer;"></i>
-                            </th>
-                            <th>
-                                #
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template x-for="(field, index) in fields" :key="index">
-                            <tr x-bind:id="'list-' + index">
-                                <td>
-                                    <select x-bind:name="'role_id[' + index + ']'" class="form-control pilih-role"
-                                        @change="getUserByRole" required>
-                                        <option value="">Pilih Jabatan/Role</option>
-                                        @foreach ($roles as $role)
-                                            <option value="{{ $role->id }}"
-                                                x-bind:selected="field.user_id == {{ $role->id }}">
-                                                {{ $role->name }}</option>
-                                        @endforeach
-                                    </select>
-
-                                </td>
-                                <td>
-                                    <select x-bind:name="'user_id[' + index + ']'" class="form-control pilih-user">
-                                        <option value="0">Semua User Di Jabatan</option>
-                                        {{-- @foreach ($users as $user)
-                                            
-                                            <option value="{{ $user->id }}">{{ $user->nama }}</option>
-                                        @endforeach --}}
-                                    </select>
-
-                                </td>
-                                <td>
-                                    <input type="text" x-bind:name="'keterangan[' + index + ']'"
-                                        class="form-control" placeholder="Keterangan..."
-                                        x-bind:value="field.keterangan">
-                                </td>
-                                <td>
-                                    <select x-bind:name="'menunggu_persetujuan_id[' + index + ']'"
-                                        class="form-control pilih-persetujuan">
-                                        <option value="">Langsung Dikirim</option>
-                                        @foreach ($roles as $role)
-                                            <option value="{{ $role->id }}"
-                                                x-bind:selected="field.menunggu_persetujuan_id == {{ $role->id }}" x-show="field.role_id != {{ $role->id }}">
-                                                {{ $role->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-danger btn-sm"
-                                        @click="removeField(index)"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-
-                        </template>
-
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="5" class="text-right text-end">
-                                <button type="button" class="btn btn-info" @click="addNewField">+ Tambah
-                                    Disposisi</button>
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="pemeriksa_id">Akan Di Periksa Oleh?</label>
+                    <select name="pemeriksa_id" id="pemeriksa_id" class="form-control">
+                        @foreach ($userPemeriksa as $up)
+                            <option value="{{ $up->id }}">
+                                {{ $up->nama }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+{{-- @if (isset($surat->pemeriksa_id))
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <p>Disposisi Surat</p>
+                </div>
+                <div class="card-body table-responsive" x-data="handler()">
+                    <table class="table table-centered table-nowrap mb-0 rounded">
+                        <thead class="thead-light">
+                            <tr>
+                                <th colspan="2">
+                                    Disposisi Ke (Jabatan/User)
+                                </th>
+                                <th>
+                                    Keterangan
+                                </th>
+                                <th>
+                                    Menunggu Di Setujui <i
+                                        title="apakah pengiriman disposisi ini harus menunggu persetujuan user lainnya ?"
+                                        class="fa-regular fa-circle-question " style="cursor: pointer;"></i>
+                                </th>
+                                <th>
+                                    #
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(field, index) in fields" :key="index">
+                                <tr x-bind:id="'list-' + index">
+                                    <td>
+                                        <select x-bind:name="'role_id[' + index + ']'" class="form-control pilih-role"
+                                            @change="getUserByRole" required>
+                                            <option value="">Pilih Jabatan/Role</option>
+                                            @foreach ($roles as $role)
+                                                <option value="{{ $role->id }}"
+                                                    x-bind:selected="field.user_id == {{ $role->id }}">
+                                                    {{ $role->name }}</option>
+                                            @endforeach
+                                        </select>
+
+                                    </td>
+                                    <td>
+                                        <select x-bind:name="'user_id[' + index + ']'" class="form-control pilih-user">
+                                            <option value="0">Semua User Di Jabatan</option>
+                                        </select>
+
+                                    </td>
+                                    <td>
+                                        <input type="text" x-bind:name="'keterangan[' + index + ']'"
+                                            class="form-control" placeholder="Keterangan..."
+                                            x-bind:value="field.keterangan">
+                                    </td>
+                                    <td>
+                                        <select x-bind:name="'menunggu_persetujuan_id[' + index + ']'"
+                                            class="form-control pilih-persetujuan">
+                                            <option value="">Langsung Dikirim</option>
+                                            @foreach ($roles as $role)
+                                                <option value="{{ $role->id }}"
+                                                    x-bind:selected="field.menunggu_persetujuan_id == {{ $role->id }}" x-show="field.role_id != {{ $role->id }}">
+                                                    {{ $role->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm"
+                                            @click="removeField(index)"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+
+                            </template>
+
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="text-right text-end">
+                                    <button type="button" class="btn btn-info" @click="addNewField">+ Tambah
+                                        Disposisi</button>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif --}}
 
 
 
@@ -344,107 +365,106 @@
             formData.append("_token", token);
         });
 
-        function handler() {
-            const user_ids = {!! json_encode(old('user_id', [])) !!};
-            const role_ids = {!! json_encode(old('role_id', [])) !!};
-            const keterangans = {!! json_encode(old('keterangan', [])) !!};
-            const menunggu_persetujuan_ids = {!! json_encode(old('menunggu_persetujuan_id', [])) !!};
+        // function handler() {
+        //     const user_ids = {!! json_encode(old('user_id', [])) !!};
+        //     const role_ids = {!! json_encode(old('role_id', [])) !!};
+        //     const keterangans = {!! json_encode(old('keterangan', [])) !!};
+        //     const menunggu_persetujuan_ids = {!! json_encode(old('menunggu_persetujuan_id', [])) !!};
 
-            function createOption(role_id, parent, _index) {
+        //     function createOption(role_id, parent, _index) {
                
-                if (parent == null || parent == undefined) {
-                    return;
-                }
+        //         if (parent == null || parent == undefined) {
+        //             return;
+        //         }
 
                 
                 
 
-                parent.querySelector('.pilih-role').value = role_id;
-                const selectUser = parent.querySelector('.pilih-user');
-                //const selectPersetujuan = parent.querySelector('.pilih-persetujuan');
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', '/ajax/user-by-role/' + role_id);
-                xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-                xhr.onload = function() {
-                    if (xhr.status === 200) {
-                        const data = JSON.parse(xhr.responseText);
-                        let options = '<option value="0">Semua User Di Jabatan</option>';
-                        // let options2 =
-                        //     '<option value="">Langsung Dikirim</option><option value="0">Semua User Di Jabatan</option>';
-                        data.forEach(function(user) {
-                            options += '<option value="' + user.id + '" ' + ((user_ids.length > 0) ? ((user_ids[
-                                _index] == user.id) ? 'selected' : '') : '') + '>' + user.nama + '</option>';
-                            // options2 += '<option value="' + user.id + '" ' + ((menunggu_persetujuan_ids.length >
-                            //         0) ? ((menunggu_persetujuan_ids[_index] == user.id) ? 'selected' : '') :
-                            //     '') + '>' + user.nama + '</option>';
-                        });
-                        //set option to select
-                        selectUser.innerHTML = options;
-                        // selectPersetujuan.innerHTML = options2;
-                    } else {
-                        console.log('Request failed.  Returned status of ' + xhr.status);
-                    }
-                };
-                xhr.onerror = function() {
-                    console.log('Request failed.  Please try again later.');
-                };
+        //         parent.querySelector('.pilih-role').value = role_id;
+        //         const selectUser = parent.querySelector('.pilih-user');
+        //         //const selectPersetujuan = parent.querySelector('.pilih-persetujuan');
+        //         var xhr = new XMLHttpRequest();
+        //         xhr.open('GET', '/ajax/user-by-role/' + role_id);
+        //         xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+        //         xhr.onload = function() {
+        //             if (xhr.status === 200) {
+        //                 const data = JSON.parse(xhr.responseText);
+        //                 let options = '<option value="0">Semua User Di Jabatan</option>';
+        //                 // let options2 =
+        //                 //     '<option value="">Langsung Dikirim</option><option value="0">Semua User Di Jabatan</option>';
+        //                 data.forEach(function(user) {
+        //                     options += '<option value="' + user.id + '" ' + ((user_ids.length > 0) ? ((user_ids[
+        //                         _index] == user.id) ? 'selected' : '') : '') + '>' + user.nama + '</option>';
+        //                     // options2 += '<option value="' + user.id + '" ' + ((menunggu_persetujuan_ids.length >
+        //                     //         0) ? ((menunggu_persetujuan_ids[_index] == user.id) ? 'selected' : '') :
+        //                     //     '') + '>' + user.nama + '</option>';
+        //                 });
+        //                 //set option to select
+        //                 selectUser.innerHTML = options;
+        //                 // selectPersetujuan.innerHTML = options2;
+        //             } else {
+        //                 console.log('Request failed.  Returned status of ' + xhr.status);
+        //             }
+        //         };
+        //         xhr.onerror = function() {
+        //             console.log('Request failed.  Please try again later.');
+        //         };
 
-                xhr.send();
-            }
-
-
-            let _fields = [];
-            for (let i = 0; i < user_ids.length; i++) {
-                console.log(user_ids[i]);
-                _fields.push({
-                    user_id: user_ids[i] ?? null,
-                    role_id: role_ids[i] ?? null,
-                    keterangan: keterangans[i] ?? null,
-                    menunggu_persetujuan_id: menunggu_persetujuan_ids[i] ?? null
-                });
-
-            }
-            setTimeout(() => {
-                for (let x = 0; x < _fields.length; x++) {
-                    const f = _fields[x];
-                    createOption(role_ids[x], document.querySelector('#list-' + x), x);
-
-                }
-            }, 1000);
+        //         xhr.send();
+        //     }
 
 
+        //     let _fields = [];
+        //     for (let i = 0; i < user_ids.length; i++) {
+        //         console.log(user_ids[i]);
+        //         _fields.push({
+        //             user_id: user_ids[i] ?? null,
+        //             role_id: role_ids[i] ?? null,
+        //             keterangan: keterangans[i] ?? null,
+        //             menunggu_persetujuan_id: menunggu_persetujuan_ids[i] ?? null
+        //         });
+
+        //     }
+        //     setTimeout(() => {
+        //         for (let x = 0; x < _fields.length; x++) {
+        //             const f = _fields[x];
+        //             createOption(role_ids[x], document.querySelector('#list-' + x), x);
+
+        //         }
+        //     }, 1000);
 
 
-            return {
-                fields: _fields,
-                addNewField(e) {
-                    this.fields.push({
-                        user_id: 0,
-                        role_id: 0,
-                        keterangan: ''
-                    });
-                },
-                removeField(index) {
-                    this.fields.splice(index, 1);
-                },
-                getUserByRole(e) {
-                    const parent = e.target.parentElement.parentElement;
-                    var listIndex = parent.getAttribute('id').split('-')[1];
+
+
+        //     return {
+        //         fields: _fields,
+        //         addNewField(e) {
+        //             this.fields.push({
+        //                 user_id: 0,
+        //                 role_id: 0,
+        //                 keterangan: ''
+        //             });
+        //         },
+        //         removeField(index) {
+        //             this.fields.splice(index, 1);
+        //         },
+        //         getUserByRole(e) {
+        //             const parent = e.target.parentElement.parentElement;
+        //             var listIndex = parent.getAttribute('id').split('-')[1];
                     
-                    const role_id = e.target.value;
-                    this.fields[listIndex].role_id = role_id;
-                    _fields[listIndex].role_id = role_id;
-                    createOption(role_id, parent, listIndex);
-                    //send POST request to route ajax.user-by-role
+        //             const role_id = e.target.value;
+        //             this.fields[listIndex].role_id = role_id;
+        //             _fields[listIndex].role_id = role_id;
+        //             createOption(role_id, parent, listIndex);
+        //             //send POST request to route ajax.user-by-role
 
 
-                }
-            }
-        }
+        //         }
+        //     }
+        // }
     </script>
 
-    <script src="https://docs.opencv.org/4.7.0/opencv.js" async></script>
-    <!-- warning: loading OpenCV can take some time. Load asynchronously -->
+    {{-- <script src="https://docs.opencv.org/4.7.0/opencv.js" async></script>
     <script src="https://cdn.jsdelivr.net/gh/ColonelParrot/jscanify@master/src/jscanify.min.js"></script>
 
     <script>
@@ -476,9 +496,7 @@
             console.log('close modal scan dokumen');
   
             video.pause();
-            video.srcObject = null;
-            // const paperWidth = 300;
-            // const paperHeight = 500;   
+            video.srcObject = null;  
             canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
             resultCtx.clearRect(0, 0, result.width, result.height);
             navigator.mediaDevices.getUserMedia({ video: false });
@@ -486,5 +504,5 @@
             document.getElementById("result-scan").appendChild(resultCanvas);
             
         });
-    </script>
+    </script> --}}
 @endpush

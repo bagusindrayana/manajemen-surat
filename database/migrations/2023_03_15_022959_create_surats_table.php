@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('perihal',200);
             $table->text('isi')->nullable();
             $table->enum('sifat',['biasa','rahasia','penting','sangat penting']);
-            $table->enum('status',['pending','proses','ditolak','selesai']);
+            $table->enum('status',['diperiksa','pending','proses','ditolak','selesai']);
             $table->timestamps();
         });
     }

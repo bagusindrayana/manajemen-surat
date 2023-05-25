@@ -52,11 +52,6 @@ class RolesSeeder extends Seeder
                 'description' => 'Lurah',
                 'permissions' => [],
             ],
-            [
-                'name'=>'Wakil Lurah',
-                'description' => 'Wakil Lurah',
-                'permissions' => [],
-            ],
         ];
 
         foreach ($newRoles as $key => $value) {
