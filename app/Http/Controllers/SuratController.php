@@ -459,12 +459,13 @@ class SuratController extends Controller
                 ]);
             }
             DB::commit();
+            return redirect()->route('surat.index')->with('success', 'Surat berhasil di-disposisikan');
         } catch (\Throwable $th) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal untuk melakukan disposisi. ' . $th->getMessage())->withInput($request->all());
         }
 
-        return redirect()->route('surat.index')->with('success', 'Surat berhasil di-disposisikan');
+        
 
     }
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocalStorageController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SuratController;
 use App\Http\Controllers\UserController;
@@ -43,6 +44,9 @@ Route::group(['middleware'=>['auth']],function(){
         Route::post('upload', [BerkasController::class, 'upload'])->name('berkas.upload');
         Route::post('upload/delete', [BerkasController::class, 'uploadDelete'])->name('berkas.upload-delete');
     });
+
+    Route::get('profil',[ProfilController::class,'index'])->name('profil.index');
+    Route::post('profil/update',[ProfilController::class,'update'])->name('profil.update');
 
     Route::group(['prefix'=>'ajax'],function(){
         Route::get('user-by-role/{role}',[SuratController::class,'getUserByRole'])->name('ajax.user-by-role');
