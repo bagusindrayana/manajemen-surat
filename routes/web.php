@@ -53,7 +53,7 @@ Route::group(['middleware'=>['auth']],function(){
     Route::get('/profil/success-login-google',[ProfilController::class,'successAuthGoogle'])->name('profil.login-google-success');
     Route::post('profil/tambah-cloud-storage',[ProfilController::class,'tambahCloudStorage'])->name('profil.tambah-cloud-storage');
     Route::put('profil/update-cloud-storage/{id}',[ProfilController::class,'updateCloudStorage'])->name('profil.update-cloud-storage');
-    Route::put('profil/hapus-cloud-storage/{id}',[ProfilController::class,'hapusCloudStorage'])->name('profil.hapus-cloud-storage');
+    Route::delete('profil/hapus-cloud-storage/{id}',[ProfilController::class,'hapusCloudStorage'])->name('profil.hapus-cloud-storage');
 
     Route::group(['prefix'=>'ajax'],function(){
         Route::get('user-by-role/{role}',[SuratController::class,'getUserByRole'])->name('ajax.user-by-role');

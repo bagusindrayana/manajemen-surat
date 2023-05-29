@@ -224,7 +224,7 @@ class CloudStorageController extends Controller
      */
     public function destroy(CloudStorage $cloudStorage)
     {   
-        if($cloudStorage->personal){
+        if($cloudStorage->personal && $cloudStorage->user_id != Auth::user()->id){
             return abort(404);
         }
         DB::beginTransaction();

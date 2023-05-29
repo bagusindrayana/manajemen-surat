@@ -111,7 +111,7 @@ class SuratController extends Controller
             if ($request->sifat != "biasa") {
                 $type = "warning";
             }
-            NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Di Periksa Untuk Disposisi : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
+            NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Disposisi : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
             // foreach ($request->user_id as $key => $user_id) {
             //     $role_id = $request->role_id[$key];
             //     $surat->disposisis()->create([
@@ -189,7 +189,7 @@ class SuratController extends Controller
                 $wr->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray())->where('user_id', 0);
             });
         })->first();
-        if ($cek == null && auth()->user()->id != $surat->user_id && $surat->status != "diperiksa") {
+        if ($cek == null && auth()->user()->id != $surat->user_id && $surat->status != "diperiksa" && $surat->pemeriksa_id != auth()->user()->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melakukan disposisi');
         }
         $disposisi_berikutnya = SuratDisposisi::where('surat_id', $surat->id)->whereIn('menunggu_persetujuan_id', auth()->user()->roles->pluck('id')->toArray())->get();
@@ -226,8 +226,48 @@ class SuratController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Surat $surat)
-    {
-        //
+    {   
+        if($request->berikan_disposisi == "berikan_disposisi"){
+            DB::beginTransaction();
+            try {
+                $surat->update([
+                    'status' => 'pending',
+                ]);
+                foreach ($request->user_id as $key => $user_id) {
+                    $role_id = $request->role_id[$key];
+                    $surat->disposisis()->create([
+                        'user_id' => $user_id,
+                        'role_id' => $role_id,
+                        'menunggu_persetujuan_id' => $request->menunggu_persetujuan_id[$key],
+                        'keterangan' => $request->keterangan[$key],
+                    ]);
+                    if ($request->menunggu_persetujuan_id[$key] != null) {
+                        continue;
+                    }
+                    $type = "info";
+                    if ($request->sifat != "biasa") {
+                        $type = "warning";
+                    }
+                    if ($user_id == 0) {
+                        $users = User::whereHas('roles', function ($wr) use ($role_id) {
+                            $wr->where('id', $role_id);
+                        })->get();
+        
+                        foreach ($users as $user) {
+                            NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Diperiksa : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
+                        }
+                    } else {
+                        NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Diperiksa : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
+                    }
+                }
+                DB::commit();
+                return redirect()->route('surat.index')->with('success', 'Surat berhasil ditambahkan');
+            } catch (\Throwable $th) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'Surat gagal ditambahkan : ' . $th->getMessage())->withInput($request->all());
+            }
+        }
+        
     }
 
     /**
@@ -435,10 +475,10 @@ class SuratController extends Controller
                         })->get();
 
                         foreach ($users as $user) {
-                            NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Disposisi : ' . $surat->nomor_surat, 'surat/' . $surat->id, "info");
+                            NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Diperiksa : ' . $surat->nomor_surat, 'surat/' . $surat->id, "info");
                         }
                     } else {
-                        NotificationHelper::createNotification($db->user_id, 'Surat Masuk Perlu Disposisi : ' . $surat->nomor_surat, 'surat/' . $surat->id, "info");
+                        NotificationHelper::createNotification($db->user_id, 'Surat Masuk Perlu Diperiksa : ' . $surat->nomor_surat, 'surat/' . $surat->id, "info");
                     }
                 }
             }

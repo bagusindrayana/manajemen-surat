@@ -305,92 +305,102 @@
         </div>
     </div>
     @if ($surat->status == 'diperiksa' && $surat->pemeriksa_id == auth()->user()->id)
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <p>Disposisi Surat</p>
-                    </div>
-                    <div class="card-body table-responsive" x-data="handler()">
-                        <table class="table table-centered table-nowrap mb-0 rounded">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th colspan="2">
-                                        Disposisi Ke (Jabatan/User)
-                                    </th>
-                                    <th>
-                                        Keterangan
-                                    </th>
-                                    <th>
-                                        Menunggu Di Setujui <i
-                                            title="apakah pengiriman disposisi ini harus menunggu persetujuan user lainnya ?"
-                                            class="fa-regular fa-circle-question " style="cursor: pointer;"></i>
-                                    </th>
-                                    <th>
-                                        #
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="(field, index) in fields" :key="index">
-                                    <tr x-bind:id="'list-' + index">
-                                        <td>
-                                            <select x-bind:name="'role_id[' + index + ']'" class="form-control pilih-role"
-                                                @change="getUserByRole" required>
-                                                <option value="">Pilih Jabatan/Role</option>
-                                                @foreach ($roles as $role)
-                                                    <option value="{{ $role->id }}"
-                                                        x-bind:selected="field.user_id == {{ $role->id }}">
-                                                        {{ $role->name }}</option>
-                                                @endforeach
-                                            </select>
-
-                                        </td>
-                                        <td>
-                                            <select x-bind:name="'user_id[' + index + ']'" class="form-control pilih-user">
-                                                <option value="0">Semua User Di Jabatan</option>
-                                            </select>
-
-                                        </td>
-                                        <td>
-                                            <input type="text" x-bind:name="'keterangan[' + index + ']'"
-                                                class="form-control" placeholder="Keterangan..."
-                                                x-bind:value="field.keterangan">
-                                        </td>
-                                        <td>
-                                            <select x-bind:name="'menunggu_persetujuan_id[' + index + ']'"
-                                                class="form-control pilih-persetujuan">
-                                                <option value="">Langsung Dikirim</option>
-                                                @foreach ($roles as $role)
-                                                    <option value="{{ $role->id }}"
-                                                        x-bind:selected="field.menunggu_persetujuan_id == {{ $role->id }}"
-                                                        x-show="field.role_id != {{ $role->id }}">
-                                                        {{ $role->name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <button type="button" class="btn btn-danger btn-sm"
-                                                @click="removeField(index)"><i class="fas fa-trash"></i></button>
+        <form action="{{ route('surat.update', $surat->id) }}" method="POST">
+            @method('PUT')
+            @csrf
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <p>Disposisi Surat</p>
+                        </div>
+                        <div class="card-body table-responsive" x-data="handler()">
+                            <table class="table table-centered table-nowrap mb-0 rounded">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th colspan="2">
+                                            Disposisi Ke (Jabatan/User)
+                                        </th>
+                                        <th>
+                                            Keterangan
+                                        </th>
+                                        <th>
+                                            Menunggu Di Setujui <i
+                                                title="apakah pengiriman disposisi ini harus menunggu persetujuan user lainnya ?"
+                                                class="fa-regular fa-circle-question " style="cursor: pointer;"></i>
+                                        </th>
+                                        <th>
+                                            #
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(field, index) in fields" :key="index">
+                                        <tr x-bind:id="'list-' + index">
+                                            <td>
+                                                <select x-bind:name="'role_id[' + index + ']'" class="form-control pilih-role"
+                                                    @change="getUserByRole" required>
+                                                    <option value="">Pilih Jabatan/Role</option>
+                                                    @foreach ($roles as $role)
+                                                        <option value="{{ $role->id }}"
+                                                            x-bind:selected="field.user_id == {{ $role->id }}">
+                                                            {{ $role->name }}</option>
+                                                    @endforeach
+                                                </select>
+    
+                                            </td>
+                                            <td>
+                                                <select x-bind:name="'user_id[' + index + ']'" class="form-control pilih-user">
+                                                    <option value="0">Semua User Di Jabatan</option>
+                                                </select>
+    
+                                            </td>
+                                            <td>
+                                                <input type="text" x-bind:name="'keterangan[' + index + ']'"
+                                                    class="form-control" placeholder="Keterangan..."
+                                                    x-bind:value="field.keterangan">
+                                            </td>
+                                            <td>
+                                                <select x-bind:name="'menunggu_persetujuan_id[' + index + ']'"
+                                                    class="form-control pilih-persetujuan">
+                                                    <option value="">Langsung Dikirim</option>
+                                                    @foreach ($roles as $role)
+                                                        <option value="{{ $role->id }}"
+                                                            x-bind:selected="field.menunggu_persetujuan_id == {{ $role->id }}"
+                                                            x-show="field.role_id != {{ $role->id }}">
+                                                            {{ $role->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-danger btn-sm"
+                                                    @click="removeField(index)"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+    
+                                    </template>
+    
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="5" class="text-right text-end">
+                                            <button type="button" class="btn btn-info" @click="addNewField">+ Tambah
+                                                Disposisi</button>
                                         </td>
                                     </tr>
-
-                                </template>
-
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="5" class="text-right text-end">
-                                        <button type="button" class="btn btn-info" @click="addNewField">+ Tambah
-                                            Disposisi</button>
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-success text-white" name="berikan_disposisi" value="berikan_disposisi">Simpan</button>
+                </div>
+            </div>
+        </form>
+        
     @endif
     @if ($surat->status != 'diperiksa')
         <div class="row mb-4">
@@ -431,7 +441,7 @@
             </div>
         </div>
     @endif
-    @if ($surat->user_id != Auth::user()->id)
+    @if ($surat->user_id != Auth::user()->id && isset($cek))
         <div class="row mb-4">
             <div class="col-md-12">
                 <div class="card">

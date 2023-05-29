@@ -18,7 +18,8 @@ class Surat extends Model
         'perihal',
         'sifat',
         'status',
-        'isi'
+        'isi',
+        'pemeriksa_id'
     ];
 
     protected $filterFields = [

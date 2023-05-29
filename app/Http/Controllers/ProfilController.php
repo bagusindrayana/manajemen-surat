@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\StorageHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -286,6 +287,35 @@ class ProfilController extends Controller
             //throw $th;
             DB::rollBack();
             return redirect()->back()->with('error', 'Storage gagal dibuat')->withInput($request->all());
+        }
+    }
+
+    public function hapusCloudStorage($id)
+    {
+        $cloudStorage = CloudStorage::find($id);
+        if($cloudStorage->personal && $cloudStorage->user_id != Auth::user()->id){
+            return abort(404);
+        }
+        DB::beginTransaction();
+        try {
+            $cloudStorage->delete();
+            if($cloudStorage->setting != null){
+                if($cloudStorage->setting->access_token != null){
+                    $oauth2 = Google::make('oauth2');
+                    $setting = StorageHelper::createRefreshToken($cloudStorage);
+                    $oauth2->getClient()->setAccessType('offline');
+                    $oauth2->getClient()->setApprovalPrompt("force");
+                    $oauth2->getClient()->setAccessToken($setting->access_token);
+                    //disconnect
+                    $oauth2->getClient()->revokeToken();
+                }
+            }
+            DB::commit();
+            return redirect()->route('profil.index')->with('success', 'Storage berhasil dihapus');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Storage gagal dihapus');
         }
     }
 }

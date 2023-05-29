@@ -38,7 +38,7 @@ class RolesSeeder extends Seeder
                 'permissions' => [],
             ],
             [
-                'name' => 'kasi ekobang,',
+                'name' => 'kasi ekobang',
                 'description' => 'Kepala Seksi Ekonomi dan Pembangunan',
                 'permissions' => [],
             ],
