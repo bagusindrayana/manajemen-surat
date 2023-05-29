@@ -439,6 +439,7 @@ class SuratController extends Controller
 
             if ($request->status == "ditolak") {
                 NotificationHelper::createNotification($surat->user_id, 'Surat : ' . $surat->nomor_surat . '. Ditolak oleh ' . Auth::user()->nama, 'surat/' . $surat->id, "danger");
+                NotificationHelper::createNotification($surat->pemeriksa_id, 'Surat : ' . $surat->nomor_surat . '. Ditolak oleh ' . Auth::user()->nama, 'surat/' . $surat->id, "danger");
                 $_mp_id = $surat->disposisis()
                     ->whereNotNull('menunggu_persetujuan_id')
                     ->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray())
@@ -462,6 +463,7 @@ class SuratController extends Controller
 
             if ($request->status == "diterima") {
                 NotificationHelper::createNotification($surat->user_id, 'Surat : ' . $surat->nomor_surat . '. Diterima oleh ' . Auth::user()->nama, 'surat/' . $surat->id, "success");
+                NotificationHelper::createNotification($surat->pemeriksa_id, 'Surat : ' . $surat->nomor_surat . '. Diterima oleh ' . Auth::user()->nama, 'surat/' . $surat->id, "success");
                 foreach ($surat->disposisi_berikutnya as $db) {
                     if ($db->menunggu_persetujuan_id != null) {
                         $_cek = $surat->disposisis()->where('role_id', $db->menunggu_persetujuan_id)->where('status', 'diterima')->count();
