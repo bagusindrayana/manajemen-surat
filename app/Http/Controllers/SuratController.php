@@ -141,7 +141,7 @@ class SuratController extends Controller
             // }
             $tmpFiles = StorageHelper::getTmpFiles();
             foreach ($tmpFiles as $key => $tmpFile) {
-                $_path = 'surat/' . Auth::user()->id . '/' . basename($tmpFile['path']);
+                $_path = 'surat/' . $surat->id . '/' . basename($tmpFile['path']);
                 $berkas = $surat->berkas()->create([
                     // 'storage_id'=>$activeStorage->id,
                     'nama_berkas' => $tmpFile['name'],
@@ -158,7 +158,7 @@ class SuratController extends Controller
 
             UserLogHelper::create('menambah surat baru dengan nomor : ' . $surat->nomor_surat);
             DB::commit();
-            dispatch(new UploadCloudStorage($surat, $request->all(), Auth::user()->id));
+            dispatch(new UploadCloudStorage($surat, $request->all()));
             return redirect()->route('surat.index')->with('success', 'Surat berhasil ditambahkan');
         } catch (\Throwable $th) {
             DB::rollBack();

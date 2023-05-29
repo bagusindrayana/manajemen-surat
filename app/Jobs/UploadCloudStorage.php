@@ -20,17 +20,17 @@ class UploadCloudStorage implements ShouldQueue
 
     public $surat;
     public $request;
-    public $user_id;
+    public $user_ids;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(Surat $surat,Array $request,$user_id)
+    public function __construct(Surat $surat,Array $request,$user_ids = null)
     {
         $this->surat = $surat;
         $this->request = $request;
-        $this->user_id = $user_id;
+        $this->user_ids = $user_ids;
     }
 
     /**
@@ -42,15 +42,20 @@ class UploadCloudStorage implements ShouldQueue
     {
         //$tmpFiles = StorageHelper::getTmpFiles();
         $activeStorages = [];
-        if (isset($this->request['all_storage']) && $this->request['all_storage'] == "true") {
-            $activeStorages = CloudStorage::where('status', 'active')->get();
+        if($this->user_ids != null && is_array($this->user_ids) && count($this->user_ids) > 0){
+            $activeStorages = CloudStorage::where('status', 'active')->whereIn('user_id',$this->user_ids)->get();
         } else {
-            $activeStorages = CloudStorage::where('status', 'active')->whereIn('id',$this->request['cloud_storage_id'])->get();
+            if (isset($this->request['all_storage']) && $this->request['all_storage'] == "true") {
+                $activeStorages = CloudStorage::where('status', 'active')->where('personal',false)->get();
+            } else {
+                $activeStorages = CloudStorage::where('status', 'active')->where('personal',false)->whereIn('id',$this->request['cloud_storage_id'])->get();
+            }
         }
+        
 
         foreach ($this->surat->berkas as $berkas) {
             foreach ($activeStorages as $key => $activeStorage) {
-                $uploadedResult = $activeStorage->uploadFile($berkas->path,$this->user_id);
+                $uploadedResult = $activeStorage->uploadFile($berkas->path,$this->surat->id);
                 $berkas->berkas_storages()->create([
                     'storage_id' => $activeStorage->id,
                     'berkas_id' => $berkas->id,

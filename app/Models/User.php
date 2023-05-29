@@ -55,4 +55,9 @@ class User extends Authenticatable
         return $this->hasMany(KontakNotifikasi::class);
     }
 
+    public function my_cloud_storages()
+    {
+        return $this->hasMany(CloudStorage::class)->where('personal',true);
+    }
+
 }

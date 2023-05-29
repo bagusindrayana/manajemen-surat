@@ -26,14 +26,16 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/login',[LoginController::class,'index'])->name('login');
 Route::post('/login',[LoginController::class,'auth'])->name('login.auth');
-Route::get('/login-google',[LoginController::class,'authGoogle'])->name('login.google');
-Route::get('/success-login-google',[LoginController::class,'successAuthGoogle'])->name('login.google-success');
 
 Route::group(['middleware'=>['auth']],function(){
     Route::post('/logout',[LoginController::class,'logout'])->name('login.logout');
     Route::get('/',[HomeController::class,'index'])->name('home');
     Route::resource('/role',RoleController::class);
+    Route::get('/cloud-storage/login-google',[CloudStorageController::class,'authGoogle'])->name('cloud-storage.login-google');
+    Route::get('/cloud-storage/success-login-google',[CloudStorageController::class,'successAuthGoogle'])->name('cloud-storage.google-success');
     Route::resource('/cloud-storage',CloudStorageController::class);
+    
+
     Route::resource('/surat',SuratController::class);
     Route::get('local-storage',[LocalStorageController::class,'index'])->name('local-storage.index');
     Route::get('surat/{surat}/download-pdf',[SuratController::class,'downloadPdf'])->name('surat.download-pdf');
@@ -47,6 +49,11 @@ Route::group(['middleware'=>['auth']],function(){
 
     Route::get('profil',[ProfilController::class,'index'])->name('profil.index');
     Route::post('profil/update',[ProfilController::class,'update'])->name('profil.update');
+    Route::get('/profil/login-google',[ProfilController::class,'authGoogle'])->name('profil.login-google');
+    Route::get('/profil/success-login-google',[ProfilController::class,'successAuthGoogle'])->name('profil.login-google-success');
+    Route::post('profil/tambah-cloud-storage',[ProfilController::class,'tambahCloudStorage'])->name('profil.tambah-cloud-storage');
+    Route::put('profil/update-cloud-storage/{id}',[ProfilController::class,'updateCloudStorage'])->name('profil.update-cloud-storage');
+    Route::put('profil/hapus-cloud-storage/{id}',[ProfilController::class,'hapusCloudStorage'])->name('profil.hapus-cloud-storage');
 
     Route::group(['prefix'=>'ajax'],function(){
         Route::get('user-by-role/{role}',[SuratController::class,'getUserByRole'])->name('ajax.user-by-role');
