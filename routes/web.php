@@ -80,6 +80,10 @@ Route::group(['prefix'=>'cron-job'],function(){
     });
 });
 
+Route::get('kebijakan-privasi',function(){
+    return view('policy');
+});
+
 
 
 
