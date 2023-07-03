@@ -117,7 +117,7 @@
                                         </div>
                                     </div>
                                     <!-- End of Form -->
-                                    <div class="d-flex justify-content-between align-items-top mb-4">
+                                    {{-- <div class="d-flex justify-content-between align-items-top mb-4">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" value=""
                                                 id="remember">
@@ -127,7 +127,7 @@
                                         </div>
                                         <div><a href="./forgot-password.html" class="small text-right">Lost
                                                 password?</a></div>
-                                    </div>
+                                    </div> --}}
                                 </div>
                                 <div class="d-grid">
                                     <button type="submit" class="btn btn-gray-800">Sign in</button>
