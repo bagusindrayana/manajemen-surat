@@ -9,6 +9,7 @@ use App\Helpers\UserLogHelper;
 use App\Jobs\UploadCloudStorage;
 use App\Models\Berkas;
 use App\Models\CloudStorage;
+use App\Models\Notifikasi;
 use App\Models\Role;
 use App\Models\Surat;
 use App\Models\SuratDisposisi;
@@ -428,6 +429,7 @@ class SuratController extends Controller
         }
         DB::beginTransaction();
         try {
+            //update disposisi
             $cek->update([
                 'status' => $request->status,
                 'keterangan' => $request->keterangan,
@@ -500,6 +502,10 @@ class SuratController extends Controller
                     'status' => 'proses'
                 ]);
             }
+            //update notifikasi jadi read
+            Notifikasi::where('user_id', auth()->user()->id)->where('data', 'like', '%surat/' . $surat->id.'%')->update([
+                'is_read' => true
+            ]);
             DB::commit();
             return redirect()->route('surat.index')->with('success', 'Surat berhasil di-disposisikan');
         } catch (\Throwable $th) {
