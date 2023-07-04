@@ -290,8 +290,10 @@ class SuratController extends Controller
                 //     }
                 // }
             }
+            Notifikasi::where('user_id', auth()->user()->id)->where('data', 'like', '%surat/' . $surat->id.'%')->delete();
             $surat->disposisis()->delete();
             $surat->delete();
+            
             DB::commit();
             return redirect()->route('surat.index')->with('success', 'Surat berhasil dihapus');
         } catch (\Throwable $th) {
