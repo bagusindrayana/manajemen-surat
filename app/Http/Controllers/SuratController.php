@@ -505,7 +505,7 @@ class SuratController extends Controller
                 ]);
             }
             //update notifikasi jadi read
-            Notifikasi::where('user_id', auth()->user()->id)->where('data', 'like', '%surat/' . $surat->id.'%')->update([
+            Notifikasi::where('user_id', auth()->user()->id)->where('url', 'like', '%surat/' . $surat->id.'%')->update([
                 'is_read' => true
             ]);
             DB::commit();

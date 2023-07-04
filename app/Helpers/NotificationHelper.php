@@ -68,7 +68,7 @@ class NotificationHelper
 
     public static function myNotification()
     {
-        return Notifikasi::where('user_id',Auth::user()->id)->orderBy('created_at','DESC')->get();
+        return Notifikasi::where('user_id',Auth::user()->id)->where('is_read',false)->orderBy('created_at','DESC')->get();
     }
 
     public static function myTotalUnreadNotification()
