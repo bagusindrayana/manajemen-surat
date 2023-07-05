@@ -305,7 +305,7 @@
         </div>
     </div>
     @if ($surat->status == 'diperiksa' && $surat->pemeriksa_id == auth()->user()->id)
-        <form action="{{ route('surat.update', $surat->id) }}" method="POST">
+        <form action="{{ route('surat.update', $surat->id) }}" method="POST" id="form-disposisi">
             @method('PUT')
             @csrf
             <div class="row mb-4">

@@ -58,7 +58,7 @@ class SuratController extends Controller
     {
         $tmpFiles = StorageHelper::getTmpFiles();
         $users = User::where('id', '!=', auth()->user()->id)->get();
-        $userPemeriksa = User::where('id', '!=', auth()->user()->id)->whereHas('roles', function ($q) {
+        $userPemeriksa = User::whereHas('roles', function ($q) {
             $q->whereHas('permissions', function ($q) {
                 $q->where('name', 'Check Surat');
             });

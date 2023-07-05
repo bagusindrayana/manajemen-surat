@@ -28,9 +28,7 @@
                                 </div>
                             </form>
                         </div>
-                        <div class="col-md-6 text-end py-2">
-                            <a href="{{ route('surat.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah</a>
-                        </div>
+                       
                     </div>
                     
                 </div>
@@ -42,9 +40,9 @@
                                 <th class="border-0">Nomor Surat</th>
                                 <th class="border-0">Perihal</th>
                                 <th class="border-0">Sifat</th>
-                                <th class="border-0">Status</th>
+                                <th class="border-0">Isi Surat</th>
                                 <th class="border-0">Di Input Oleh</th>
-                                <th class="border-0 rounded-end">Detail</th>
+                                <th class="border-0 rounded-end">Disposisi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -63,17 +61,14 @@
                                         {{ $item->sifat }}
                                     </td>
                                     <td>
-                                        {{ $item->status }}
-                                        @if($item->status == "diperiksa")
-                                            <br>
-                                            <b><i>Diperiksa Oleh : {{ $item->pemeriksa->nama }}</i></b>
-                                        @endif
+                                        {{ strip_tags($item->isi) }}
+                                        
                                     </td>
                                     <td>
                                         {{ $item->user->nama }}
                                     </td>
                                     <td>
-                                        <a href="{{ route('surat.show',$item->id) }}" class="btn btn-warning btn-sm"><i class="fas fa-eye"></i> Detail</a>
+                                        <a href="{{ route('surat.show',$item->id) }}#form-disposisi"" class="btn btn-warning btn-sm"><i class="fas fa-eye"></i> Disposisi</a>
                                     </td>
                                 </tr>
                             @endforeach

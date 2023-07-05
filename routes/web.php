@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BerkasController;
 use App\Http\Controllers\CloudStorageController;
+use App\Http\Controllers\DisposisiSuratController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocalStorageController;
 use App\Http\Controllers\LoginController;
@@ -41,6 +42,10 @@ Route::group(['middleware'=>['auth']],function(){
     Route::get('surat/{surat}/download-pdf',[SuratController::class,'downloadPdf'])->name('surat.download-pdf');
     Route::get('surat/{surat}/view-berkas/{berkas}',[SuratController::class,'viewBerkas'])->name('surat.view-berkas');
     Route::post('surat/{surat}/disposisi',[SuratController::class,'disposisi'])->name('surat.disposisi');
+    Route::group(['prefix'=>'disposisi-surat'],function(){
+        Route::get('/',[DisposisiSuratController::class,'index'])->name('disposisi-surat.index');
+        Route::post('/{surat}',[DisposisiSuratController::class,'show'])->name('disposisi-surat.show');
+    });
     Route::resource('/user',UserController::class);
     Route::group(['prefix'=>'berkas'],function(){
         Route::post('upload', [BerkasController::class, 'upload'])->name('berkas.upload');

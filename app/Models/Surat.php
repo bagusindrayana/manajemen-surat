@@ -60,4 +60,8 @@ class Surat extends Model
         $disposisi_berikutnya = SuratDisposisi::where('surat_id', $this->id)->whereIn('menunggu_persetujuan_id', auth()->user()->roles->pluck('id')->toArray())->get();
         return $disposisi_berikutnya;
     }
+
+    function pemeriksa() {
+        return $this->belongsTo(User::class, 'pemeriksa_id');
+    }
 }

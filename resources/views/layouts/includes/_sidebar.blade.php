@@ -36,8 +36,8 @@
         <ul class="nav flex-column pt-3 pt-md-0">
             <li class="nav-item">
                 <a href="{{ url('/') }}/index.html" class="nav-link d-flex align-items-center">
-                    
-                    <span class="mt-1 ms-1 sidebar-text">{{ env("APP_NAME") }}</span>
+
+                    <span class="mt-1 ms-1 sidebar-text">{{ env('APP_NAME') }}</span>
                 </a>
             </li>
             <li class="nav-item ">
@@ -74,30 +74,31 @@
                             </svg>
                         </span>
                     </span>
-                    <div class="multi-level collapse  {{ (request()->is('local-storage*') || request()->is('cloud-storage*') || request()->is('user*')) ? 'show' : '' }} " role="list" id="submenu-components" aria-expanded="false">
+                    <div class="multi-level collapse  {{ request()->is('local-storage*') || request()->is('cloud-storage*') || request()->is('user*') ? 'show' : '' }} "
+                        role="list" id="submenu-components" aria-expanded="false">
                         <ul class="flex-column nav">
                             @can('View Cloud Storage')
-                                <li class="nav-item  {{ (request()->is('local-storage*')) ? 'active' : '' }}">
+                                <li class="nav-item  {{ request()->is('local-storage*') ? 'active' : '' }}">
                                     <a class="nav-link" href="{{ route('local-storage.index') }}">
                                         <span class="sidebar-text">Local Storage</span>
                                     </a>
                                 </li>
-                                <li class="nav-item  {{ (request()->is('cloud-storage*')) ? 'active' : '' }}">
+                                <li class="nav-item  {{ request()->is('cloud-storage*') ? 'active' : '' }}">
                                     <a class="nav-link" href="{{ route('cloud-storage.index') }}">
                                         <span class="sidebar-text">Cloud Storage</span>
                                     </a>
                                 </li>
                             @endcan
-                            
+
                             @can('View Role')
-                                <li class="nav-item  {{ (request()->is('role*')) ? 'active' : '' }}">
+                                <li class="nav-item  {{ request()->is('role*') ? 'active' : '' }}">
                                     <a class="nav-link" href="{{ route('role.index') }}">
                                         <span class="sidebar-text">Role</span>
                                     </a>
                                 </li>
                             @endcan
                             @can('View User')
-                                <li class="nav-item  {{ (request()->is('user*')) ? 'active' : '' }}">
+                                <li class="nav-item  {{ request()->is('user*') ? 'active' : '' }}">
                                     <a class="nav-link" href="{{ route('user.index') }}">
                                         <span class="sidebar-text">User</span>
                                     </a>
@@ -107,9 +108,9 @@
                     </div>
                 </li>
             @endcanany
-            
+
             @canany(['View Surat'])
-                <li class="nav-item {{ (request()->is('surat*')) ? 'active' : '' }}">
+                <li class="nav-item {{ request()->is('surat*') ? 'active' : '' }}">
                     <a href="{{ route('surat.index') }}" class="nav-link ">
                         <span class="sidebar-icon">
                             <i class="fas fa-mail-bulk me-2 icon"></i>
@@ -119,6 +120,17 @@
                     </a>
                 </li>
             @endcanany
+            @if (auth()->user()->hasRole('Lurah'))
+                <li class="nav-item {{ request()->is('disposisi-surat*') ? 'active' : '' }}">
+                    <a href="{{ route('disposisi-surat.index') }}" class="nav-link ">
+                        <span class="sidebar-icon">
+                            <i class="fas fa-mail-bulk me-2 icon"></i>
+                        </span>
+
+                        <span class="sidebar-text">Disposisi Surat</span>
+                    </a>
+                </li>
+            @endif
             <li role="separator" class="dropdown-divider mt-4 mb-3 border-gray-700"></li>
         </ul>
     </div>
