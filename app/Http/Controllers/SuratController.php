@@ -290,7 +290,7 @@ class SuratController extends Controller
                 //     }
                 // }
             }
-            Notifikasi::where('user_id', auth()->user()->id)->where('data', 'like', '%surat/' . $surat->id.'%')->delete();
+            Notifikasi::where('user_id', auth()->user()->id)->where('url', 'like', '%surat/' . $surat->id.'%')->delete();
             $surat->disposisis()->delete();
             $surat->delete();
             
@@ -298,7 +298,7 @@ class SuratController extends Controller
             return redirect()->route('surat.index')->with('success', 'Surat berhasil dihapus');
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->route('surat.index')->with('error', 'Surat gagal di hapus');
+            return redirect()->route('surat.index')->with('error', 'Surat gagal di hapus : '.$th->getMessage());
 
         }
     }
