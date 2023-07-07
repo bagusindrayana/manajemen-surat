@@ -21,14 +21,15 @@ class NotifWa implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($no,$message)
-    {   
-        if(substr($no,0,1) == '0'){
-            $this->no = '62'.substr($no,1);
+    public function __construct($no, $message)
+    {
+        if (substr($no, 0, 1) == '0') {
+            $this->no = '62' . substr($no, 1);
         } else {
             $this->no = $no;
         }
-        
+        $this->no = str_replace("-", "", $this->no);
+
         $this->message = $message;
     }
 
@@ -38,20 +39,38 @@ class NotifWa implements ShouldQueue
      * @return void
      */
     public function handle()
-    {   
+    {
         //check if first no is 0 and replace with 62
-        
-       
+
+
         $client = new \GuzzleHttp\Client();
-        $res = $client->request('POST', env("WA_API_URL").env("WA_API_KEY"), [
-            'form_params' => [
-                'id' => $this->no,
-                'message' => "NOTIFIKASI - ".env("APP_NAME")."\n
+        if (env("WA_API_KEY") != "" && env("WA_API_URL") != null) {
+            $res = $client->request('POST', env("WA_API_URL") . env("WA_API_KEY"), [
+                'form_params' => [
+                    'id' => $this->no,
+                    'message' => "NOTIFIKASI - " . env("APP_NAME") . "\n
 ----------------------------------------------------\n
-".$this->message,
-            ]
-        ]);
-        Log::info($res->getStatusCode());
+" . $this->message,
+                ]
+            ]);
+
+
+            Log::info($res->getStatusCode());
+        } else {
+            $url = env("WA_API_URL");
+            $session = env("WA_SESSION_NAME");
+            $res = $client->request('POST', $url, [
+                'form_params' => [
+                    'session' => $session,
+                    'to' => $this->no,
+                    'text' => "NOTIFIKASI - " . env("APP_NAME") . "\n
+----------------------------------------------------\n
+" . $this->message,
+                ]
+            ]);
+            Log::info($res->getStatusCode());
+        }
+
         // if((int)$res->getStatusCode() != 200){
         //     throw new Exception("Error Processing Request", 1);
         // }

@@ -37,6 +37,10 @@ class NotificationHelper
         return $disposisi;
     }
 
+    public static function jumlahSuratPerluDiperiksa(){
+        return Surat::where('pemeriksa_id',Auth::user()->id)->where('status','diperiksa')->count();
+    }
+
     public static function mySurat()
     {
         $_surat = Surat::where('status','ditolak')->where('user_id',Auth::user()->id)->get();
@@ -51,7 +55,7 @@ class NotificationHelper
             'url' => $url,
             'type' => $type
         ]);
-        $message = $notif->keterangan."\n".url($notif->url);
+        $message = $notif->keterangan." \n ".url($notif->url);
         foreach ($notif->user->kontak_notifikasis  as $key => $value) {
             
             if($value->type == "wa"){

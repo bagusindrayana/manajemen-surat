@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SuratController;
 use App\Http\Controllers\UserController;
+use App\Models\Notifikasi;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +28,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/login',[LoginController::class,'index'])->name('login');
 Route::post('/login',[LoginController::class,'auth'])->name('login.auth');
+
+if(request()->read_notif != "" && request()->read_notif != null){
+    $notifikasi = Notifikasi::find(request()->read_notif);
+    $notifikasi->update([
+        'is_read'=>true
+    ]);
+}
 
 Route::group(['middleware'=>['auth']],function(){
     Route::post('/logout',[LoginController::class,'logout'])->name('login.logout');

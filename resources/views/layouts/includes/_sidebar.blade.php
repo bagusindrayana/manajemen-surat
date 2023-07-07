@@ -127,7 +127,7 @@
                             <i class="fas fa-mail-bulk me-2 icon"></i>
                         </span>
 
-                        <span class="sidebar-text">Disposisi Surat</span>
+                        <span class="sidebar-text">Disposisi Surat <small class="badge bg-danger">{{ NotificationHelper::jumlahSuratPerluDiperiksa() }}</small></span>
                     </a>
                 </li>
             @endif

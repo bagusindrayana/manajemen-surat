@@ -1,5 +1,5 @@
-<div class="col-md-6">
-    <div class="card">
+<div class="col-lg-6 col-md-12">
+    <div class="card mb-4">
         <div class="card-header">
             <a href="{{ route('user.index') }}" class="btn btn-primary"><i class="fas fa-angle-left"></i> Kembali</a>
         </div>
@@ -89,8 +89,8 @@
         </div>
     </div>
 </div>
-<div class="col-md-6">
-    <div class="card">
+<div class="col-lg-6 col-md-12">
+    <div class="card mb-4">
         <div class="card-header">
             <p>Kontak User Untuk Menerima Notifikasi</p>
         </div>
@@ -99,11 +99,12 @@
                 <thead>
                     <tr>
                         <th>
-                            Kontak
-                        </th>
-                        <th>
                             Jenis Kontak
                         </th>
+                        <th>
+                            Kontak
+                        </th>
+                        
                         <th>
                             #
                         </th>
@@ -113,20 +114,21 @@
                     <template x-for="(field, index) in fields" :key="index">
                         <tr>
                             <td>
-                                <input type="text" x-bind:name="'kontak[' + index + ']'" class="form-control" x-bind:id="'kontak-' + index"
-                                    aria-describedby="kontak" placeholder="Kontak..." x-bind:value="field.kontak">
-                                @error('kontak.0')
-                                    <div class="alert alert-danger">{{ $message }}</div>
-                                @enderror
-                            </td>
-                            <td>
-                                <select x-bind:name="'type[' + index + ']'" x-bind:id="'type-' + index" class="form-control">
+                                <select x-bind:name="'type[' + index + ']'" x-bind:id="'type-' + index" class="form-control jenis-kontak">
                                     <option value="email" x-bind:selected="field.type == 'email'">Email</option>
                                     <option value="wa" x-bind:selected="field.type == 'wa'">Whatsapp</option>
                                     <option value="telegram" x-bind:selected="field.type == 'telegram'">Telegram</option>
                                     {{-- <option value="push" x-bind:selected="field.type == 'push'">Browser Notification</option> --}}
                                 </select>
                             </td>
+                            <td>
+                                <input type="text" x-bind:name="'kontak[' + index + ']'" class="form-control" x-bind:id="'kontak-' + index"
+                                    aria-describedby="kontak" placeholder="Kontak..." x-bind:value="field.kontak">
+                                @error('kontak.0')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
+                            </td>
+                            
                             <td>
                                 <button type="button" class="btn btn-sm btn-danger" @click="removeField(index)"><i
                                         class="fas fa-trash" ></i></button>
@@ -170,5 +172,19 @@
                
             }
         }
+
+        //add listener tp select with class jenis-kontak and get parent closest with row and change input type text to email or number based on selected value
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('jenis-kontak')) {
+                let parent = e.target.closest('tr');
+                let input = parent.querySelector('input');
+                let value = e.target.value;
+                if (value == 'email') {
+                    input.type = 'email';
+                } else {
+                    input.type = 'number';
+                }
+            }
+        });
     </script>
 @endpush

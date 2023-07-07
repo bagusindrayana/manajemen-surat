@@ -35,7 +35,7 @@
               <div class="list-group list-group-flush ">
                 <a href="#" class="text-center text-primary fw-bold border-bottom border-light py-3">Notifications</a>
                 @foreach (NotificationHelper::myNotification() as $item)
-                  <a href="{{ url($item->url) }}" class="list-group-item list-group-item-action border-bottom notifikasi" data-id="{{ $item->id }}">
+                  <a href="{{ url($item->url) }}?read_notif={{ $item->id }}" class="list-group-item list-group-item-action border-bottom notifikasi" data-id="{{ $item->id }}">
                     <div class="row align-items-center">
                       <div class="col-auto">
                         <!-- Avatar -->

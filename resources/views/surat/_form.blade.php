@@ -40,7 +40,7 @@
             </div>
             <div class="card-body">
                 <div class="mb-4">
-                    <label for="nomor_surat">Nomor Surat</label>
+                    <label for="nomor_surat">Nomor Surat <small class="text-danger">*</small></label>
                     <input type="text" name="nomor_surat" required class="form-control" id="nomor_surat"
                         aria-describedby="nomor_surat" placeholder="Nomor Surat..."
                         value="{{ old('nomor_surat', @$surat->nomor_surat) }}">
@@ -49,7 +49,7 @@
                     @enderror
                 </div>
                 <div class="mb-4">
-                    <label for="tanggal_surat">Tanggal Surat</label>
+                    <label for="tanggal_surat">Tanggal Surat <small class="text-danger">*</small></label>
                     <input type="date" name="tanggal_surat" required class="form-control" id="tanggal_surat"
                         aria-describedby="tanggal_surat" placeholder="Tanggal Surat..."
                         value="{{ old('tanggal_surat', @$surat->tanggal_surat) }}">
@@ -58,7 +58,7 @@
                     @enderror
                 </div>
                 <div class="mb-4">
-                    <label for="perihal">Perihal</label>
+                    <label for="perihal">Perihal  <small class="text-danger">*</small></label>
                     <input type="text" name="perihal" required class="form-control" id="perihal"
                         aria-describedby="perihal" placeholder="Perihal Surat..."
                         value="{{ old('perihal', @$surat->perihal) }}">
@@ -84,22 +84,18 @@
         </div>
     </div>
     <div class="col-lg-6 col-md-12 mb-4">
-        <div class="card">
+        <div class="card mb-4">
             <div class="card-header">
                 Isi Disposisi
             </div>
             <div class="card-body">
-                <div id="editor" style="height: 350px;">
+                {{-- <div id="editor" style="height: 350px;">
                     {!! old('isi', @$surat->isi) !!}
                 </div>
-                <input type="hidden" id="isi" name="isi">
+                <input type="hidden" id="isi" name="isi"> --}}
+                <textarea name="isi" id="isi" class="form-control" placeholder="Isi Disposisi...">{!! old('isi', @$surat->isi) !!}</textarea>
             </div>
         </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-6 col-md-12 mb-4">
         <div class="card mb-4">
             <div class="card-header">
                 <span>Berkas Surat/Lampiran </span> 
@@ -111,7 +107,29 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
+<div class="row">
+    <div class="col-lg-6 col-md-12 mb-4">
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                Pemeriksa Surat
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="pemeriksa_id">Akan Di Periksa Oleh? <small class="text-danger">Silahkan Pilih Siapa Yang Akan Mengatur Disposisi Surat Ini</small></label>
+                    <select name="pemeriksa_id" id="pemeriksa_id" class="form-control">
+                        @foreach ($userPemeriksa as $up)
+                            <option value="{{ $up->id }}">
+                                {{ $up->nama }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="col-lg-6 col-md-12 mb-4">
         <div class="card">
@@ -143,27 +161,11 @@
     </div>
 </div>
 
-<div class="row">
+{{-- <div class="row">
     <div class="col-md-12">
-        <div class="card mb-4">
-            <div class="card-header">
-                <p>Pemeriksa Surat</p>
-            </div>
-            <div class="card-body">
-                <div class="form-group">
-                    <label for="pemeriksa_id">Akan Di Periksa Oleh?</label>
-                    <select name="pemeriksa_id" id="pemeriksa_id" class="form-control">
-                        @foreach ($userPemeriksa as $up)
-                            <option value="{{ $up->id }}">
-                                {{ $up->nama }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-        </div>
+        
     </div>
-</div>
+</div> --}}
 
 {{-- @if (isset($surat->pemeriksa_id))
     <div class="row">
@@ -287,19 +289,19 @@
 @push('scripts')
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
-        var quill = new Quill('#editor', {
-            theme: 'snow',
-            placeholder: 'isi disposisi...'
-        });
+        // var quill = new Quill('#editor', {
+        //     theme: 'snow',
+        //     placeholder: 'isi disposisi...'
+        // });
         const editor = document.querySelector('#editor');
         const isi = document.querySelector('#isi');
         const form = document.querySelector('#myForm');
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const content = quill.root.innerHTML;
-            isi.value = content;
-            form.submit();
-        });
+        // form.addEventListener('submit', function(e) {
+        //     e.preventDefault();
+        //     const content = quill.root.innerHTML;
+        //     isi.value = content;
+        //     form.submit();
+        // });
 
         const token = document.head.querySelector('meta[name="csrf-token"]').content;
         const tmpFiles = {!! json_encode($tmpFiles) !!}
@@ -313,6 +315,8 @@
             chunkSize: 2000000, //2 mb
             // If true, the individual chunks of a file are being uploaded simultaneously.
             //parallelChunkUploads: true
+            // accept only image,pdf and word document
+            acceptedFiles: 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx',
             addRemoveLinks: true,
             init: function() {
                 this.on('maxfilesexceeded', function(file) {

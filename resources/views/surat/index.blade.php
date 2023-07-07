@@ -63,7 +63,19 @@
                                         {{ $item->sifat }}
                                     </td>
                                     <td>
-                                        {{ $item->status }}
+                                        @if ($item->status == "diperiksa")
+                                            <span class="badge bg-info">{{ $item->status }}</span>
+                                        @elseif($item->status == "pending")
+                                            <span class="badge bg-warning">{{ $item->status }}</span>
+                                        @elseif($item->status == "proses")
+                                            <span class="badge bg-info">{{ $item->status }}</span>
+                                        @elseif($item->status == "ditolak")
+                                            <span class="badge bg-danger">{{ $item->status }}</span>
+                                        @elseif($item->status == "selesai")
+                                            <span class="badge bg-success">{{ $item->status }}</span>
+                                        @else
+                                            <span class="badge bg-dafult">{{ $item->status }}</span>
+                                        @endif
                                         @if($item->status == "diperiksa")
                                             <br>
                                             <b><i>Diperiksa Oleh : {{ $item->pemeriksa->nama }}</i></b>

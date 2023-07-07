@@ -37,7 +37,9 @@ class SuratController extends Controller
             $surats = $surats->where(function($w){
                 $w->where('user_id', auth()->user()->id)
                 ->orWhereHas('disposisis',function($wd){
-                    $wd->where('user_id', auth()->user()->id);
+                    $wd->where('user_id', auth()->user()->id)->orWhere(function($ww){
+                        $ww->where('user_id',0)->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray());
+                    });
                 })->orWhere('pemeriksa_id', auth()->user()->id);
             });
         }
@@ -112,7 +114,11 @@ class SuratController extends Controller
             if ($request->sifat != "biasa") {
                 $type = "warning";
             }
-            NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Disposisi : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
+            NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Disposisi : \n
+Nomor : *' . $surat->nomor_surat.'* \n
+Perihal : *'.$surat->perihal.'* \n
+Sifat : *'.$surat->perihal.'* \n
+Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan Disposisi', 'surat/' . $surat->id, $type);
             // foreach ($request->user_id as $key => $user_id) {
             //     $role_id = $request->role_id[$key];
             //     $surat->disposisis()->create([
@@ -255,17 +261,25 @@ class SuratController extends Controller
                         })->get();
         
                         foreach ($users as $user) {
-                            NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Diperiksa : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
+                            NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Diperiksa : \n
+Nomor : *' . $surat->nomor_surat.'* \n
+Perihal : *'.$surat->perihal.'* \n
+Sifat : *'.$surat->perihal.'* \n
+Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk' . $surat->id, $type);
                         }
                     } else {
-                        NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Diperiksa : ' . $surat->nomor_surat, 'surat/' . $surat->id, $type);
+                        NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Diperiksa : \n
+Nomor : *' . $surat->nomor_surat.'* \n
+Perihal : *'.$surat->perihal.'* \n
+Sifat : *'.$surat->perihal.'* \n
+Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk', 'surat/' . $surat->id, $type);
                     }
                 }
                 DB::commit();
-                return redirect()->route('surat.index')->with('success', 'Surat berhasil ditambahkan');
+                return redirect()->route('surat.index')->with('success', 'Surat berhasil di-disposisikan');
             } catch (\Throwable $th) {
                 DB::rollBack();
-                return redirect()->back()->with('error', 'Surat gagal ditambahkan : ' . $th->getMessage())->withInput($request->all());
+                return redirect()->back()->with('error', 'Surat gagal di-disposisikan : ' . $th->getMessage())->withInput($request->all());
             }
         }
         
@@ -481,21 +495,37 @@ class SuratController extends Controller
                         })->get();
 
                         foreach ($users as $user) {
-                            NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Diperiksa : ' . $surat->nomor_surat, 'surat/' . $surat->id, "info");
+                            NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Diperiksa : \n
+Nomor : *' . $surat->nomor_surat.'* \n
+Perihal : *'.$surat->perihal.'* \n
+Sifat : *'.$surat->perihal.'* \n
+Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk', 'surat/' . $surat->id, "info");
                         }
                     } else {
-                        NotificationHelper::createNotification($db->user_id, 'Surat Masuk Perlu Diperiksa : ' . $surat->nomor_surat, 'surat/' . $surat->id, "info");
+                        NotificationHelper::createNotification($db->user_id, 'Surat Masuk Perlu Diperiksa : \n
+Nomor : *' . $surat->nomor_surat.'* \n
+Perihal : *'.$surat->perihal.'* \n
+Sifat : *'.$surat->perihal.'* \n
+Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk', 'surat/' . $surat->id, "info");
                     }
                 }
             }
 
+            
+            
+            //update notifikasi jadi read
+            Notifikasi::where('user_id', auth()->user()->id)->where('url', 'like', '%surat/' . $surat->id.'%')->update([
+                'is_read' => true
+            ]);
+            DB::commit();
             $_ditolak = SuratDisposisi::where('surat_id', $surat->id)->where('status', 'ditolak')->count();
             $_diterima = SuratDisposisi::where('surat_id', $surat->id)->where('status', 'diterima')->count();
+            $_all = SuratDisposisi::where('surat_id', $surat->id)->count();
             if ($_ditolak > 0) {
                 $cek->surat->update([
                     'status' => 'ditolak'
                 ]);
-            } elseif ($_diterima == $cek->disposisis) {
+            } elseif ($_diterima == $_all) {
                 $cek->surat->update([
                     'status' => 'selesai'
                 ]);
@@ -504,15 +534,19 @@ class SuratController extends Controller
                     'status' => 'proses'
                 ]);
             }
-            //update notifikasi jadi read
-            Notifikasi::where('user_id', auth()->user()->id)->where('url', 'like', '%surat/' . $surat->id.'%')->update([
-                'is_read' => true
-            ]);
-            DB::commit();
-            return redirect()->route('surat.index')->with('success', 'Surat berhasil di-disposisikan');
+            if($request->status == "diterima"){
+                return redirect()->route('surat.index')->with('success', 'Berhasil konfirmasi menerima disposisi');
+            } else {
+                return redirect()->route('surat.index')->with('success', 'Berhasil konfirmasi menolak disposisi');
+            }
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal untuk melakukan disposisi. ' . $th->getMessage())->withInput($request->all());
+            if($request->status == "diterima"){
+                return redirect()->back()->with('error', 'Gagal untuk melakukan konfirmasi disposisi. ' . $th->getMessage())->withInput($request->all());
+            } else {
+                return redirect()->back()->with('error', 'Gagal untuk menolak disposisi. ' . $th->getMessage())->withInput($request->all());
+            }
+            
         }
 
         
