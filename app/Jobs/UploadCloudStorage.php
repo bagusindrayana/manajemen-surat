@@ -19,18 +19,24 @@ class UploadCloudStorage implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $surat;
-    public $request;
-    public $user_ids;
+    // public $request;
+    // public $user_ids;
+    public $cloud_storage_id;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(Surat $surat,Array $request,$user_ids = null)
-    {
+    public function __construct(
+        Surat $surat,
+        // Array $request,
+        // $user_ids = null,
+        $cloud_storage_id
+    ) {
         $this->surat = $surat;
-        $this->request = $request;
-        $this->user_ids = $user_ids;
+        // $this->request = $request;
+        // $this->user_ids = $user_ids;
+        $this->cloud_storage_id = $cloud_storage_id;
     }
 
     /**
@@ -40,29 +46,40 @@ class UploadCloudStorage implements ShouldQueue
      */
     public function handle()
     {
-        //$tmpFiles = StorageHelper::getTmpFiles();
-        $activeStorages = [];
-        if($this->user_ids != null && is_array($this->user_ids) && count($this->user_ids) > 0){
-            $activeStorages = CloudStorage::where('status', 'active')->whereIn('user_id',$this->user_ids)->get();
-        } else {
-            if (isset($this->request['all_storage']) && $this->request['all_storage'] == "true") {
-                $activeStorages = CloudStorage::where('status', 'active')->where('personal',false)->get();
-            } else {
-                $activeStorages = CloudStorage::where('status', 'active')->where('personal',false)->whereIn('id',$this->request['cloud_storage_id'])->get();
-            }
-        }
-        
-
         foreach ($this->surat->berkas as $berkas) {
-            foreach ($activeStorages as $key => $activeStorage) {
-                $uploadedResult = $activeStorage->uploadFile($berkas->path,$this->surat->id);
-                $berkas->berkas_storages()->create([
-                    'storage_id' => $activeStorage->id,
-                    'berkas_id' => $berkas->id,
-                    'path' => $uploadedResult,
-                ]);
-            }
+            $activeStorage = CloudStorage::find($this->cloud_storage_id);
+            $uploadedResult = $activeStorage->uploadFile($berkas->path, $this->surat->id);
+            $berkas->berkas_storages()->create([
+                'storage_id' => $activeStorage->id,
+                'berkas_id' => $berkas->id,
+                'path' => $uploadedResult,
+            ]);
+
         }
+
+        //$tmpFiles = StorageHelper::getTmpFiles();
+        // $activeStorages = [];
+        // if($this->user_ids != null && is_array($this->user_ids) && count($this->user_ids) > 0){
+        //     $activeStorages = CloudStorage::where('status', 'active')->whereIn('user_id',$this->user_ids)->get();
+        // } else {
+        //     if (isset($this->request['all_storage']) && $this->request['all_storage'] == "true") {
+        //         $activeStorages = CloudStorage::where('status', 'active')->where('personal',false)->get();
+        //     } else {
+        //         $activeStorages = CloudStorage::where('status', 'active')->where('personal',false)->whereIn('id',$this->request['cloud_storage_id'])->get();
+        //     }
+        // }
+
+
+        // foreach ($this->surat->berkas as $berkas) {
+        //     foreach ($activeStorages as $key => $activeStorage) {
+        //         $uploadedResult = $activeStorage->uploadFile($berkas->path,$this->surat->id);
+        //         $berkas->berkas_storages()->create([
+        //             'storage_id' => $activeStorage->id,
+        //             'berkas_id' => $berkas->id,
+        //             'path' => $uploadedResult,
+        //         ]);
+        //     }
+        // }
 
         // foreach ($tmpFiles as $key => $tmpFile) {
         //     $berkas = $this->surat->berkas()->create([
@@ -71,7 +88,7 @@ class UploadCloudStorage implements ShouldQueue
         //         'mime_type' => $tmpFile['mime_type'],
         //         'size' => $tmpFile['size'],
         //     ]);
-            
+
         //     foreach ($activeStorages as $key => $activeStorage) {
         //         $uploadedResult = $activeStorage->uploadFile($tmpFile['path']);
         //         $berkas->berkas_storages()->create([

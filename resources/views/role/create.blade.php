@@ -11,6 +11,7 @@
                     <form action="{{ route('role.store') }}" class="form" method="POST" id="myForm">
                         @csrf
                         @include('role._form')
+                        <button type="submit" class="btn btn-success text-white"><i class="fas fa-save"></i> Simpan</button>
                     </form>
                 </div>
             </div>

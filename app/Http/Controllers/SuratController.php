@@ -31,16 +31,16 @@ class SuratController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {   
+    {
         $surats = Surat::filtersInput(null, 'search');
-        if(!auth()->user()->can('View All Surat')){
-            $surats = $surats->where(function($w){
+        if (!auth()->user()->can('View All Surat')) {
+            $surats = $surats->where(function ($w) {
                 $w->where('user_id', auth()->user()->id)
-                ->orWhereHas('disposisis',function($wd){
-                    $wd->where('user_id', auth()->user()->id)->orWhere(function($ww){
-                        $ww->where('user_id',0)->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray());
-                    });
-                })->orWhere('pemeriksa_id', auth()->user()->id);
+                    ->orWhereHas('disposisis', function ($wd) {
+                        $wd->where('user_id', auth()->user()->id)->orWhere(function ($ww) {
+                            $ww->where('user_id', 0)->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray());
+                        });
+                    })->orWhere('pemeriksa_id', auth()->user()->id);
             });
         }
         $surats = $surats->orderBy('created_at', 'desc')->paginate(10)->appends(request()->input());
@@ -73,7 +73,7 @@ class SuratController extends Controller
             'users' => $users,
             'roles' => $roles,
             'storages' => $storages,
-            'userPemeriksa'=>$userPemeriksa
+            'userPemeriksa' => $userPemeriksa
         ];
 
 
@@ -106,8 +106,8 @@ class SuratController extends Controller
                 'perihal' => $request->perihal,
                 'sifat' => $request->sifat,
                 'isi' => $request->isi,
-                'pemeriksa_id'=>$request->pemeriksa_id,
-                'status'=>'diperiksa'
+                'pemeriksa_id' => $request->pemeriksa_id,
+                'status' => 'diperiksa'
             ]);
             $user_id = $request->pemeriksa_id;
             $type = "info";
@@ -115,9 +115,9 @@ class SuratController extends Controller
                 $type = "warning";
             }
             NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Disposisi : \n
-Nomor : *' . $surat->nomor_surat.'* \n
-Perihal : *'.$surat->perihal.'* \n
-Sifat : *'.$surat->perihal.'* \n
+Nomor : *' . $surat->nomor_surat . '* \n
+Perihal : *' . $surat->perihal . '* \n
+Sifat : *' . $surat->perihal . '* \n
 Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan Disposisi', 'surat/' . $surat->id, $type);
             // foreach ($request->user_id as $key => $user_id) {
             //     $role_id = $request->role_id[$key];
@@ -165,7 +165,15 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
 
             UserLogHelper::create('menambah surat baru dengan nomor : ' . $surat->nomor_surat);
             DB::commit();
-            dispatch(new UploadCloudStorage($surat, $request->all()));
+            if (isset($request->all_storage) && $request->all_storage == "true") {
+                $activeStorages = CloudStorage::where('status', 'active')->where('personal', false)->get();
+            } else {
+                $activeStorages = CloudStorage::where('status', 'active')->where('personal', false)->whereIn('id', $request->cloud_storage_id)->get();
+            }
+            foreach ($activeStorages as $key => $activeStorage) {
+                dispatch(new UploadCloudStorage($surat, $activeStorage->id));
+            }
+            
             return redirect()->route('surat.index')->with('success', 'Surat berhasil ditambahkan');
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -208,8 +216,8 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
             'cek' => $cek,
             'title' => 'Detail Surat',
             'stillUpload' => $stillUpload,
-            'roles'=>$roles,
-            'users'=>$users,
+            'roles' => $roles,
+            'users' => $users,
         ];
         return view('surat.show', $data);
     }
@@ -233,8 +241,8 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Surat $surat)
-    {   
-        if($request->berikan_disposisi == "berikan_disposisi"){
+    {
+        if ($request->berikan_disposisi == "berikan_disposisi") {
             DB::beginTransaction();
             try {
                 $surat->update([
@@ -259,19 +267,19 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
                         $users = User::whereHas('roles', function ($wr) use ($role_id) {
                             $wr->where('id', $role_id);
                         })->get();
-        
+
                         foreach ($users as $user) {
                             NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Diperiksa : \n
-Nomor : *' . $surat->nomor_surat.'* \n
-Perihal : *'.$surat->perihal.'* \n
-Sifat : *'.$surat->perihal.'* \n
+Nomor : *' . $surat->nomor_surat . '* \n
+Perihal : *' . $surat->perihal . '* \n
+Sifat : *' . $surat->perihal . '* \n
 Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk' . $surat->id, $type);
                         }
                     } else {
                         NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Diperiksa : \n
-Nomor : *' . $surat->nomor_surat.'* \n
-Perihal : *'.$surat->perihal.'* \n
-Sifat : *'.$surat->perihal.'* \n
+Nomor : *' . $surat->nomor_surat . '* \n
+Perihal : *' . $surat->perihal . '* \n
+Sifat : *' . $surat->perihal . '* \n
 Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk', 'surat/' . $surat->id, $type);
                     }
                 }
@@ -282,7 +290,7 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
                 return redirect()->back()->with('error', 'Surat gagal di-disposisikan : ' . $th->getMessage())->withInput($request->all());
             }
         }
-        
+
     }
 
     /**
@@ -304,15 +312,15 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
                 //     }
                 // }
             }
-            Notifikasi::where('user_id', auth()->user()->id)->where('url', 'like', '%surat/' . $surat->id.'%')->delete();
+            Notifikasi::where('user_id', auth()->user()->id)->where('url', 'like', '%surat/' . $surat->id . '%')->delete();
             $surat->disposisis()->delete();
             $surat->delete();
-            
+
             DB::commit();
             return redirect()->route('surat.index')->with('success', 'Surat berhasil dihapus');
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->route('surat.index')->with('error', 'Surat gagal di hapus : '.$th->getMessage());
+            return redirect()->route('surat.index')->with('error', 'Surat gagal di hapus : ' . $th->getMessage());
 
         }
     }
@@ -373,18 +381,18 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
             //jika tidak bisa merge maka di kompres saja
             $zipArchive = new ZipArchive();
             $zip_name = 'lembar_disposisi_' . $nomor . '.zip';
-            if ($zipArchive->open($path . $zip_name, ZIPARCHIVE::CREATE | ZIPARCHIVE::OVERWRITE)  !== TRUE) {
+            if ($zipArchive->open($path . $zip_name, ZIPARCHIVE::CREATE | ZIPARCHIVE::OVERWRITE) !== TRUE) {
                 return redirect()->back()->with('error', 'Gagal membuat zip file (1)');
             } else {
 
                 try {
-                    $zipArchive->addFile($path . 'tmp_' . $file_name,$file_name);
+                    $zipArchive->addFile($path . 'tmp_' . $file_name, $file_name);
                     foreach ($surat->berkas as $berkas) {
                         // $isLocal = $berkas->storages()->where('type', 'local')->count();
                         // if ($isLocal > 0) {
                         //     $zipArchive->addGlob(storage_path() . '/app/'.$berkas->path);
                         // }
-                        $zipArchive->addFile(storage_path() . '/app/' . $berkas->path,basename($berkas->path));
+                        $zipArchive->addFile(storage_path() . '/app/' . $berkas->path, basename($berkas->path));
                     }
                 } catch (\Throwable $th) {
                     Log::error($th);
@@ -395,7 +403,7 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
                     return redirect()->back()->with('error', 'Gagal membuat zip file (3) : ' . $zipArchive->status);
                 } else {
                     @$zipArchive->close();
-                    
+
                 }
 
             }
@@ -427,7 +435,7 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
             $mime = Storage::mimeType($berkas->path);
             return response($get)->header('Content-Type', $mime);
         }
-        
+
         abort(404);
     }
 
@@ -496,25 +504,25 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
 
                         foreach ($users as $user) {
                             NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Diperiksa : \n
-Nomor : *' . $surat->nomor_surat.'* \n
-Perihal : *'.$surat->perihal.'* \n
-Sifat : *'.$surat->perihal.'* \n
+Nomor : *' . $surat->nomor_surat . '* \n
+Perihal : *' . $surat->perihal . '* \n
+Sifat : *' . $surat->perihal . '* \n
 Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk', 'surat/' . $surat->id, "info");
                         }
                     } else {
                         NotificationHelper::createNotification($db->user_id, 'Surat Masuk Perlu Diperiksa : \n
-Nomor : *' . $surat->nomor_surat.'* \n
-Perihal : *'.$surat->perihal.'* \n
-Sifat : *'.$surat->perihal.'* \n
+Nomor : *' . $surat->nomor_surat . '* \n
+Perihal : *' . $surat->perihal . '* \n
+Sifat : *' . $surat->perihal . '* \n
 Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk', 'surat/' . $surat->id, "info");
                     }
                 }
             }
 
-            
-            
+
+
             //update notifikasi jadi read
-            Notifikasi::where('user_id', auth()->user()->id)->where('url', 'like', '%surat/' . $surat->id.'%')->update([
+            Notifikasi::where('user_id', auth()->user()->id)->where('url', 'like', '%surat/' . $surat->id . '%')->update([
                 'is_read' => true
             ]);
             DB::commit();
@@ -534,22 +542,22 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
                     'status' => 'proses'
                 ]);
             }
-            if($request->status == "diterima"){
+            if ($request->status == "diterima") {
                 return redirect()->route('surat.index')->with('success', 'Berhasil konfirmasi menerima disposisi');
             } else {
                 return redirect()->route('surat.index')->with('success', 'Berhasil konfirmasi menolak disposisi');
             }
         } catch (\Throwable $th) {
             DB::rollBack();
-            if($request->status == "diterima"){
+            if ($request->status == "diterima") {
                 return redirect()->back()->with('error', 'Gagal untuk melakukan konfirmasi disposisi. ' . $th->getMessage())->withInput($request->all());
             } else {
                 return redirect()->back()->with('error', 'Gagal untuk menolak disposisi. ' . $th->getMessage())->withInput($request->all());
             }
-            
+
         }
 
-        
+
 
     }
 

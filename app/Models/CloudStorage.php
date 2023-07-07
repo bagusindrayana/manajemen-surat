@@ -203,11 +203,11 @@ class CloudStorage extends Model
 
     public function scopeUploadFile($q, $path,$user_id)
     {
-        
+        $setting = $this->setting;
         $result = null;
         switch ($this->type) {
             case 'google':
-                $setting = $this->setting;
+                
                 $drive = Google::make('drive');
                 $setting = StorageHelper::createRefreshToken($this);
                 $drive->getClient()->setAccessType('offline');
@@ -219,6 +219,22 @@ class CloudStorage extends Model
                 $d_file = new DriveFile();
                 $d_file->setName(basename($path));
                 $d_file->setParents([$folder_id]);
+
+                //check folder exist
+                // $optParams = array(
+                //     'pageSize' => 10,
+                //     'fields' => 'nextPageToken, files(id, name, size, mimeType, webViewLink, webContentLink, iconLink, trashed, createdTime, modifiedTime)',
+                //     'q' => "trashed=false and '$folder_id' in parents"
+                // );
+                // $files = $drive->files->listFiles($optParams)->files;
+                // if (count($files) == 0) {
+                //     $folder = new DriveFile();
+                //     $folder->setName($setting->folder_name);
+                //     $folder->setMimeType('application/vnd.google-apps.folder');
+                //     $folder->setParents([$folder_id]);
+                //     $folder = $drive->files->create($folder);
+                //     $folder_id = $folder->id;
+                // }
 
                 // proses upload file ke Google Drive dg multipart
                 $_upload = $drive->files->create(
