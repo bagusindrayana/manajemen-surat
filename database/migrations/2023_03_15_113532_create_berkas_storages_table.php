@@ -19,6 +19,9 @@ return new class extends Migration
             $table->unsignedBigInteger('storage_id')->index();
             $table->string('path');
             $table->timestamps();
+
+            $table->foreign('berkas_id')->references('id')->on('berkas')->onDelete('cascade');
+            $table->foreign('storage_id')->references('id')->on('cloud_storages')->onDelete('cascade');
         });
     }
 

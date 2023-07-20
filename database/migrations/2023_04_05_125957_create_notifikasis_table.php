@@ -21,6 +21,8 @@ return new class extends Migration
             $table->boolean('is_read')->default(false);
             $table->enum('type', ['info', 'success', 'warning', 'danger'])->default('info');
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

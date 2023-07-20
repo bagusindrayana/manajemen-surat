@@ -22,6 +22,11 @@ return new class extends Migration
             $table->text('keterangan')->nullable();
             $table->enum('status',['belum','diterima','ditolak'])->default('belum');
             $table->timestamps();
+
+            $table->foreign('surat_id')->references('id')->on('surats')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('role_id')->references('id')->on('roles')->onDelete('cascade');
+            
         });
     }
 

@@ -22,6 +22,8 @@ return new class extends Migration
             $table->text('setting_json')->nullable();
             $table->enum('status',['active','inactive','optional'])->default('active');
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

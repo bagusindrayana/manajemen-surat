@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('mime_type',100);
             $table->string('size',20);
             $table->timestamps();
+
+            $table->foreign('surat_id')->references('id')->on('surats')->onDelete('cascade');
         });
     }
 

@@ -23,6 +23,8 @@ return new class extends Migration
             $table->enum('sifat',['biasa','rahasia','penting','sangat penting']);
             $table->enum('status',['diperiksa','pending','proses','ditolak','selesai']);
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

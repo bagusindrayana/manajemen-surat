@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('kontak',200);
             $table->enum('type',['email','wa','sms','telegram','push']);
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

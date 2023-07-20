@@ -15,6 +15,8 @@ return new class extends Migration
     {
         Schema::table('surats', function (Blueprint $table) {
             $table->unsignedBigInteger('pemeriksa_id')->nullable()->index()->after('status');
+
+            $table->foreign('pemeriksa_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

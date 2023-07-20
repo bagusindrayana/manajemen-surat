@@ -19,6 +19,8 @@ return new class extends Migration
             $table->enum('status',['belum','diterima','ditolak'])->default('belum');
             $table->text('keterangan')->nullable();
             $table->timestamps();
+
+            $table->foreign('surat_disposisi_id')->references('id')->on('surat_disposisis')->onDelete('cascade');
         });
     }
 
