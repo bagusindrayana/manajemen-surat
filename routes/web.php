@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BerkasController;
+use App\Http\Controllers\BerkasStorageController;
 use App\Http\Controllers\CloudStorageController;
 use App\Http\Controllers\DisposisiSuratController;
 use App\Http\Controllers\HomeController;

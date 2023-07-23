@@ -21,5 +21,23 @@ class UsersSeeder extends Seeder
 
         //assgin role id 1
         $user->assignRole(1);
+
+        $sekretaris = User::create([
+            'nama'=>'Sekretaris',
+            'username'=>'sekretaris',
+            'password'=>bcrypt('password'),
+        ]);
+
+        //assgin role id 2
+        $sekretaris->assignRole(2);
+
+        $lurah = User::create([
+            'nama'=>'Lurah',
+            'username'=>'lurah',
+            'password'=>bcrypt('password'),
+        ]);
+
+        //assgin role id 7
+        $lurah->assignRole(7);
     }
 }

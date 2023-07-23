@@ -18,7 +18,9 @@ class CloudStorageController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {
+    {   
+        if(!auth()->user()->can('View Cloud Storage'))
+            return abort(403,'Anda tidak memiliki cukup hak akses');
         $cloudStorages = CloudStorage::where('personal',false)->filtersInput(null, 'search')->orderBy('created_at', 'desc')->paginate(10);
         $data = [
             'cloudStorages' => $cloudStorages,

@@ -9,6 +9,8 @@ class LocalStorageController extends Controller
 {
     public function index()
     {   
+        if(!auth()->user()->can('View Cloud Storage'))
+            return abort(403,'Anda tidak memiliki cukup hak akses');
         $localDiskInfo = StorageHelper::localDiskInfo();
         return view('local-storage.index',compact('localDiskInfo'));
     }

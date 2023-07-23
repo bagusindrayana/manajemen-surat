@@ -16,7 +16,9 @@ class UserController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {
+    {   
+        if(!auth()->user()->can('View User'))
+            return abort(403,'Anda tidak memiliki cukup hak akses');
         $data = [
             'users'=>User::paginate(10),
             'title'=>'User'

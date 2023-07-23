@@ -31,7 +31,9 @@ class SuratController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {
+    {   
+        if(!auth()->user()->can('View Surat'))
+            return abort(403,'Anda tidak memiliki cukup hak akses');
         $surats = Surat::filtersInput(null, 'search');
         if (!auth()->user()->can('View All Surat')) {
             $surats = $surats->where(function ($w) {

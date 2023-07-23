@@ -25,7 +25,7 @@ class RolesSeeder extends Seeder
             [
                 'name' => 'Sekretaris',
                 'description' => 'Sekretaris',
-                'permissions' => [],
+                'permissions' => [9,10,11,12,13,14,15],
             ],
             [
                 'name' => 'Kasi Pemerintahan',
@@ -50,7 +50,7 @@ class RolesSeeder extends Seeder
             [
                 'name'=>'Lurah',
                 'description' => 'Lurah',
-                'permissions' => [],
+                'permissions' => [9,10,11,12,13,14,16],
             ],
         ];
 

@@ -17,6 +17,9 @@ class RoleController extends Controller
      */
     public function index()
     {   
+        //check if user can View Role
+        if(!auth()->user()->can('View Role'))
+            return abort(403,'Anda tidak memiliki cukup hak akses');
         $roles = Role::filtersInput(null, 'search')->paginate(10);
         $data = [
             'title'=>'Jabatan/Role',

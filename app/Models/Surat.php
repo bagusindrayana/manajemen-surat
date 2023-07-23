@@ -50,13 +50,6 @@ class Surat extends Model
     public function getDisposisiBerikutnyaAttribute()
     {
         $disposisi_berikutnya = [];
-        // $cek = SuratDisposisi::where('surat_id', $this->id)->where(function($w){
-        //     $w->where(function($wu){
-        //         $wu->where('user_id', auth()->user()->id)->where('role_id','!=',0);
-        //     })->orWhere(function($wr){
-        //         $wr->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray())->where('user_id',0);
-        //     });
-        // })->first();
         $disposisi_berikutnya = SuratDisposisi::where('surat_id', $this->id)->whereIn('menunggu_persetujuan_id', auth()->user()->roles->pluck('id')->toArray())->get();
         return $disposisi_berikutnya;
     }
