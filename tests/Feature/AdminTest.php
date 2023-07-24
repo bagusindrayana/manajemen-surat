@@ -70,4 +70,6 @@ class AdminTest extends TestCase
         $response = $this->actingAs($user)->get('/surat');
         $response->assertSuccessful();
     }
+
+    
 }

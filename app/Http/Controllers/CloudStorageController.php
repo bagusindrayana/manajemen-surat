@@ -261,11 +261,11 @@ class CloudStorageController extends Controller
         $oauth2->getClient()->setApprovalPrompt("force");
         $oauth2->getClient()->setScopes(
             array(
-                'https://www.googleapis.com/auth/plus.me',
+                // 'https://www.googleapis.com/auth/plus.me',
                 'https://www.googleapis.com/auth/userinfo.email',
                 'https://www.googleapis.com/auth/userinfo.profile',
                 'https://www.googleapis.com/auth/drive.file',
-                'https://www.googleapis.com/auth/drive'
+                // 'https://www.googleapis.com/auth/drive'
             )
         );
         $request->session()->put('cs_id', $request->session()->get('cs_id'));
