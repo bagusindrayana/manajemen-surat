@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 class Surat extends Model
 {
     use HasFactory,LaravelFilter;
-    
 
     protected $fillable = [
         'user_id',
@@ -36,7 +35,9 @@ class Surat extends Model
     ];
 
     function user(){
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withDefault([
+            'nama'=>'User Di Hapus'
+        ]);
     }
 
     function disposisis(){
@@ -55,6 +56,8 @@ class Surat extends Model
     }
 
     function pemeriksa() {
-        return $this->belongsTo(User::class, 'pemeriksa_id');
+        return $this->belongsTo(User::class, 'pemeriksa_id')->withDefault([
+            'nama'=>'User Di Hapus'
+        ]);
     }
 }
