@@ -59,7 +59,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($user->user_logs()->orderBy('created_at', 'DESC')->get() as $item)
+                            @php
+                                $user_logs = $user->user_logs()->orderBy('created_at', 'DESC')->paginate(10)
+                            @endphp
+                            @foreach ($user_logs as $item)
                                 <tr>
                                     <td>
                                         {{ $loop->iteration }}
@@ -78,6 +81,13 @@
                                 </tr>
                             @endforeach
                         </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4">
+                                    {{ $user_logs->links() }}
+                                </td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
