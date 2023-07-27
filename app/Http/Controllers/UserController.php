@@ -174,7 +174,7 @@ class UserController extends Controller
         DB::beginTransaction();
         try {
             $user->delete();
-            UserLogHelper::create('mengahpus user : '.$user->nama);
+            UserLogHelper::create('menghapus user : '.$user->nama);
             DB::commit();
             return redirect()->route('user.index')->with('success','User berhasil dihapus');
         } catch (\Throwable $th) {
