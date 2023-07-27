@@ -102,9 +102,45 @@
                 {{-- <button class="btn btn-info btn-sm" type="button" style="font-size: 12px;" data-bs-toggle="modal" data-bs-target="#modal-scan-dokumen" id="open-modal-scan-dokumen"><i class="fas fa-camera"> Scan Dokumen</i></button> --}}
             </div>
             <div class="card-body">
+                
                 <div id="my-awesome-dropzone" class="dropzone">
 
                 </div>
+                @if (isset($surat))
+                    <hr>
+                    <table class="table table-centered table-nowrap mb-0 rounded">
+                        <thead class="thead-light">
+                            <tr>
+                                <th class="border-0 rounded-start">#</th>
+                                <th class="border-0">Name</th>
+                                <th class="border-0">Detail</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($surat->berkas as $item)
+                                <tr>
+                                    <td>
+                                        <input type="hidden" name="old_berkas_id[]" value="{{ $item->id }}">
+                                        {{ $loop->iteration }}
+                                    </td>
+                                    <td>
+                                        {{ $item->nama_berkas }}
+                                    </td>
+        
+                                    <td>
+                                        <a href="{{ route('surat.view-berkas', [$surat->id, $item->id]) }}" target="_blank"
+                                            class="btn btn-success btn-sm text-white"><i class="fas fa-file"></i></a>
+                                    
+                                            <button type="button"
+                                            class="btn btn-danger btn-sm text-white btn-delete-berkas"><i class="fas fa-trash"></i></button>
+                                    </td>
+
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        
+                    </table>
+                @endif
             </div>
         </div>
     </div>
@@ -122,7 +158,7 @@
                     <label for="pemeriksa_id">Akan Di Periksa Oleh? <small class="text-danger">Silahkan Pilih Siapa Yang Akan Mengatur Disposisi Surat Ini</small></label>
                     <select name="pemeriksa_id" id="pemeriksa_id" class="form-control">
                         @foreach ($userPemeriksa as $up)
-                            <option value="{{ $up->id }}">
+                            <option @if(old('pemeriksa_id',@$surat->pemeriksa_id) == $up->id) selected @endif value="{{ $up->id }}">
                                 {{ $up->nama }}
                             </option>
                         @endforeach
@@ -289,6 +325,12 @@
 @push('scripts')
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
+        //listen to all '.btn-delete-berkas', and delte parent row tag when click that
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-delete-berkas')) {
+                e.target.parentElement.parentElement.remove();
+            }
+        });
         // var quill = new Quill('#editor', {
         //     theme: 'snow',
         //     placeholder: 'isi disposisi...'

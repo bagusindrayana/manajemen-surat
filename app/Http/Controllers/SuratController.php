@@ -31,9 +31,9 @@ class SuratController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {   
-        if(!auth()->user()->can('View Surat'))
-            return abort(403,'Anda tidak memiliki cukup hak akses');
+    {
+        if (!auth()->user()->can('View Surat'))
+            return abort(403, 'Anda tidak memiliki cukup hak akses');
         $surats = Surat::filtersInput(null, 'search');
         if (!auth()->user()->can('View All Surat')) {
             $surats = $surats->where(function ($w) {
@@ -175,7 +175,7 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
             foreach ($activeStorages as $key => $activeStorage) {
                 dispatch(new UploadCloudStorage($surat, $activeStorage->id));
             }
-            
+
             return redirect()->route('surat.index')->with('success', 'Surat berhasil ditambahkan');
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -232,7 +232,25 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
      */
     public function edit(Surat $surat)
     {
-        //
+        $tmpFiles = StorageHelper::getTmpFiles();
+        $users = User::where('id', '!=', auth()->user()->id)->get();
+        $userPemeriksa = User::whereHas('roles', function ($q) {
+            $q->whereHas('permissions', function ($q) {
+                $q->where('name', 'Check Surat');
+            });
+        })->get();
+        $roles = Role::all();
+        $storages = CloudStorage::where('status', 'active')->get();
+        $data = [
+            'title' => 'Edit Surat',
+            'tmpFiles' => $tmpFiles,
+            'users' => $users,
+            'roles' => $roles,
+            'storages' => $storages,
+            'userPemeriksa' => $userPemeriksa,
+            'surat' => $surat
+        ];
+        return view('surat.edit', $data);
     }
 
     /**
@@ -243,7 +261,7 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Surat $surat)
-    {
+    {   
         if ($request->berikan_disposisi == "berikan_disposisi") {
             DB::beginTransaction();
             try {
@@ -271,25 +289,102 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
                         })->get();
 
                         foreach ($users as $user) {
-                            NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Diperiksa : \n
+                            NotificationHelper::createNotification($user->id, "
+*DISPOSISI SURAT MASUK* : \n
 Nomor : *' . $surat->nomor_surat . '* \n
 Perihal : *' . $surat->perihal . '* \n
 Sifat : *' . $surat->perihal . '* \n
-Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk' . $surat->id, $type);
+Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk" . $surat->id, $type);
                         }
                     } else {
-                        NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Diperiksa : \n
+                        NotificationHelper::createNotification($user_id, "
+*DISPOSISI SURAT MASUK* : \n
 Nomor : *' . $surat->nomor_surat . '* \n
 Perihal : *' . $surat->perihal . '* \n
 Sifat : *' . $surat->perihal . '* \n
-Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk', 'surat/' . $surat->id, $type);
+Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk", 'surat/' . $surat->id, $type);
                     }
                 }
+                UserLogHelper::create('memberikan disposisi surat dengan nomor : ' . $surat->nomor_surat);
                 DB::commit();
                 return redirect()->route('surat.index')->with('success', 'Surat berhasil di-disposisikan');
             } catch (\Throwable $th) {
                 DB::rollBack();
                 return redirect()->back()->with('error', 'Surat gagal di-disposisikan : ' . $th->getMessage())->withInput($request->all());
+            }
+        } else {
+            $movedFiles = [];
+            DB::beginTransaction();
+            try {
+                $old_berkas_ids = $request->old_berkas_id;
+                $berkas_ids = $surat->berkas->pluck('id')->toArray();
+                $deleted_berkas_ids = array_diff($berkas_ids, $old_berkas_ids);
+                $updateData = [
+                    'nomor_surat' => $request->nomor_surat,
+                    'tanggal_surat' => $request->tanggal_surat,
+                    'perihal' => $request->perihal,
+                    'sifat' => $request->sifat,
+                    'isi' => $request->isi
+
+                ];
+
+                if ($surat->status == "diperiksa") {
+                    $updateData['pemeriksa_id'] = $request->pemeriksa_id;
+                }
+                if ($request->pemeriksa_id != $surat->pemeriksa_id) {
+                    $type = "info";
+                    if ($request->sifat != "biasa") {
+                        $type = "warning";
+                    }
+                    NotificationHelper::createNotification($request->pemeriksa_id, "
+Surat Masuk Perlu Disposisi : n
+Nomor : *' . $surat->nomor_surat . '* \n
+Perihal : *' . $surat->perihal . '* \n
+Sifat : *' . $surat->perihal . '* \n
+Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan Disposisi", 'surat/' . $surat->id, $type);
+                }
+                $surat->update($updateData);
+
+
+                $tmpFiles = StorageHelper::getTmpFiles();
+                foreach ($tmpFiles as $key => $tmpFile) {
+                    $_path = 'surat/' . $surat->id . '/' . basename($tmpFile['path']);
+                    $berkas = $surat->berkas()->create([
+                        // 'storage_id'=>$activeStorage->id,
+                        'nama_berkas' => $tmpFile['name'],
+                        'path' => $_path,
+                        'mime_type' => $tmpFile['mime_type'],
+                        'size' => $tmpFile['size'],
+                    ]);
+
+                    Storage::move($tmpFile['path'], $_path);
+
+                    $movedFiles[] = $_path;
+                }
+
+                $surat->berkas()->whereIn('id', $deleted_berkas_ids)->delete();
+
+
+                UserLogHelper::create('mengubah surat baru dengan nomor : ' . $surat->nomor_surat);
+                DB::commit();
+                if (isset($request->all_storage) && $request->all_storage == "true") {
+                    $activeStorages = CloudStorage::where('status', 'active')->where('personal', false)->get();
+                } else {
+                    $activeStorages = CloudStorage::where('status', 'active')->where('personal', false)->whereIn('id', $request->cloud_storage_id)->get();
+                }
+                foreach ($activeStorages as $key => $activeStorage) {
+                    dispatch(new UploadCloudStorage($surat, $activeStorage->id));
+                }
+
+                return redirect()->route('surat.index')->with('success', 'Surat berhasil diubah');
+            } catch (\Throwable $th) {
+                //throw $th;
+                //check movedFiles
+                foreach ($movedFiles as $key => $movedFile) {
+                    $np = str_replace('surat/', '_tmp/', $movedFile);
+                    Storage::move($movedFile, $np);
+                }
+                return redirect()->back()->with('error', 'Surat gagal diubah : ' . $th->getMessage())->withInput($request->all());
             }
         }
 
@@ -317,7 +412,7 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
             Notifikasi::where('user_id', auth()->user()->id)->where('url', 'like', '%surat/' . $surat->id . '%')->delete();
             $surat->disposisis()->delete();
             $surat->delete();
-
+            UserLogHelper::create('menghapus surat dengan nomor : ' . $surat->nomor_surat);
             DB::commit();
             return redirect()->route('surat.index')->with('success', 'Surat berhasil dihapus');
         } catch (\Throwable $th) {
@@ -435,7 +530,13 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
         if ($cek) {
             $get = Storage::get($berkas->path);
             $mime = Storage::mimeType($berkas->path);
-            return response($get)->header('Content-Type', $mime);
+            //change fila name
+            $file_name = $berkas->nama_berkas;
+            $file_name = str_replace('/', '-', $file_name);
+            $file_name = str_replace(' ', '_', $file_name);
+            return response($get, 200)
+                ->header('Content-Type', $mime)
+                ->header('Content-Disposition', 'inline; filename="' . $file_name . '"');
         }
 
         abort(404);
@@ -505,18 +606,20 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
                         })->get();
 
                         foreach ($users as $user) {
-                            NotificationHelper::createNotification($user->id, 'Surat Masuk Perlu Diperiksa : \n
+                            NotificationHelper::createNotification($user->id, "
+*DISPOSISI SURAT MASUK* : \n
 Nomor : *' . $surat->nomor_surat . '* \n
 Perihal : *' . $surat->perihal . '* \n
 Sifat : *' . $surat->perihal . '* \n
-Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk', 'surat/' . $surat->id, "info");
+Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk", 'surat/' . $surat->id, "info");
                         }
                     } else {
-                        NotificationHelper::createNotification($db->user_id, 'Surat Masuk Perlu Diperiksa : \n
+                        NotificationHelper::createNotification($db->user_id, "
+*DISPOSISI SURAT MASUK* \n
 Nomor : *' . $surat->nomor_surat . '* \n
 Perihal : *' . $surat->perihal . '* \n
 Sifat : *' . $surat->perihal . '* \n
-Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk', 'surat/' . $surat->id, "info");
+Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk", 'surat/' . $surat->id, "info");
                     }
                 }
             }
@@ -527,6 +630,7 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
             Notifikasi::where('user_id', auth()->user()->id)->where('url', 'like', '%surat/' . $surat->id . '%')->update([
                 'is_read' => true
             ]);
+            UserLogHelper::create('melakukan disposisi surat dengan nomor : ' . $surat->nomor_surat);
             DB::commit();
             $_ditolak = SuratDisposisi::where('surat_id', $surat->id)->where('status', 'ditolak')->count();
             $_diterima = SuratDisposisi::where('surat_id', $surat->id)->where('status', 'diterima')->count();
@@ -561,6 +665,27 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
 
 
 
+    }
+
+    public function ubahLampiran(Request $request)
+    {
+        foreach ($request->nama_berkas as $berkas_id => $nama_berkas) {
+            $berkas = Berkas::find($berkas_id);
+            $old_nama = $berkas->nama_berkas;
+            $old_extension = pathinfo($old_nama, PATHINFO_EXTENSION);
+            $new_extension = pathinfo($nama_berkas, PATHINFO_EXTENSION);
+            if ($old_extension != $new_extension) {
+                $nama_berkas = $nama_berkas . '.' . $old_extension;
+            }
+
+            $nama_berkas = str_replace('/', '-', $nama_berkas);
+            $nama_berkas = str_replace(' ', '_', $nama_berkas);
+            $berkas->update([
+                'nama_berkas' => $nama_berkas
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Berhasil mengubah nama lampiran');
     }
 
 }

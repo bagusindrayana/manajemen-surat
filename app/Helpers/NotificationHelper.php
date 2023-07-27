@@ -7,6 +7,8 @@ use App\Models\Notifikasi;
 use App\Models\Surat;
 use App\Models\SuratDisposisi;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class NotificationHelper
 {
@@ -78,5 +80,47 @@ class NotificationHelper
     public static function myTotalUnreadNotification()
     {
         return Notifikasi::where('user_id',Auth::user()->id)->where('is_read',false)->count();
+    }
+
+    public static function sendWa($no,$message) {
+        if (substr($no, 0, 1) == '0') {
+            $no = '62' . substr($no, 1);
+        }
+        $client = new \GuzzleHttp\Client();
+        try {
+            if (env("WA_API_KEY") != "" && env("WA_API_URL") != null) {
+                $res = $client->request('POST', env("WA_API_URL") . env("WA_API_KEY"), [
+                    'form_params' => [
+                        'id' => $no,
+                        'message' => $message,
+                    ]
+                ]);
+    
+    
+                Log::info($res->getStatusCode());
+            } else {
+                $url = env("WA_API_URL");
+                $session = env("WA_SESSION_NAME");
+                $res = $client->request('POST', $url, [
+                    'form_params' => [
+                        'session' => $session,
+                        'to' => $no,
+                        'text' => $message,
+                    ]
+                ]);
+                Log::info($res->getStatusCode());
+            }
+       
+        } catch (\Throwable $th) {
+            Log::error($th);
+        }
+    }
+
+    public static function sendEmail($email,$message) {
+        try {
+            Mail::to($email)->send($message);
+        } catch (\Throwable $th) {
+            Log::error($th->getMessage());
+        }
     }
 }

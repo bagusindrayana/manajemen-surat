@@ -214,7 +214,7 @@ return [
         'StorageHelper'=>App\Helpers\StorageHelper::class,
         'PDFMerger' => Webklex\PDFMerger\Facades\PDFMergerFacade::class,
         'NotificationHelper'=> App\Helpers\NotificationHelper::class,
-        'UserLogHelper'=> App\Helpers\UserLogHelper::class
+        'UserLogHelper'=> App\Helpers\UserLogHelper::class,
     ])->toArray(),
 
 ];

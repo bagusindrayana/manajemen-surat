@@ -10,7 +10,7 @@
                     <form action="{{ route('role.destroy',$role->id) }}" method="POST" class="d-inline mx-2">
                         @csrf
                         @method('DELETE')
-                        <button class="btn btn-danger"><i class="fas fa-trash"></i> Hapus</button>
+                        <button class="btn btn-danger hapus-data"><i class="fas fa-trash"></i> Hapus</button>
                     </form>
                    
                 </div>

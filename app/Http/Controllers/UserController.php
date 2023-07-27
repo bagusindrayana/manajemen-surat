@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\NotificationHelper;
 use App\Helpers\UserLogHelper;
+use App\Models\KontakNotifikasi;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -94,6 +96,8 @@ class UserController extends Controller
             'user'=>$user
         ];
 
+        
+
         return view('user.show',$data);
     }
 
@@ -177,5 +181,19 @@ class UserController extends Controller
             DB::rollback();
             return redirect()->route('user.index')->with('error','User gagal dihapus : '.$th->getMessage());
         }
+    }
+
+    function testNotifikasi($id) {
+        //check post "test-notifikasi"
+        if(request()->has('test-notifikasi')){
+            $kontak = KontakNotifikasi::find(request()->kontak_id);
+            if($kontak->type == "wa"){
+                NotificationHelper::sendWa($kontak->kontak,"Test Notifikasi Sistem Disposisi Surat Masuk : ".date("Y-m-d"));
+            } else if($kontak->type == "email"){
+                NotificationHelper::sendEmail($kontak->kontak,"Test Notifikasi Sistem Disposisi Surat Masuk : ".date("Y-m-d"));
+            }
+        }
+
+        return redirect()->back();
     }
 }

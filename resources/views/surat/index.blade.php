@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
 @push('scripts')
-@if (session('success'))
-<script>
-    //send fetch
-    fetch("{{ url('cron-job/queue') }}", {
-        method: "GET",
-        headers: {
-            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-        }
-    });
-</script>
-@endif
+    @if (session('success'))
+        <script>
+            //send fetch
+            fetch("{{ url('cron-job/queue') }}", {
+                method: "GET",
+                headers: {
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                }
+            });
+        </script>
+    @endif
 @endpush
 
 @section('content')
@@ -23,16 +23,18 @@
                         <div class="col-md-6 py-2">
                             <form action="">
                                 <div class="input-group">
-                                    <input type="text" name="search" class="form-control" placeholder="Cari {{ @$title }}..." value="{{ request()->search }}">
+                                    <input type="text" name="search" class="form-control"
+                                        placeholder="Cari {{ @$title }}..." value="{{ request()->search }}">
                                     <button class="btn btn-primary"><i class="fas fa-search"></i></button>
                                 </div>
                             </form>
                         </div>
                         <div class="col-md-6 text-end py-2">
-                            <a href="{{ route('surat.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tambah</a>
+                            <a href="{{ route('surat.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i>
+                                Tambah</a>
                         </div>
                     </div>
-                    
+
                 </div>
                 <div class="card-body table-responsive">
                     <table class="table table-centered table-nowrap mb-0 rounded">
@@ -44,7 +46,7 @@
                                 <th class="border-0">Sifat</th>
                                 <th class="border-0">Status</th>
                                 <th class="border-0">Di Input Oleh</th>
-                                <th class="border-0 rounded-end">Detail</th>
+                                <th class="border-0 rounded-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -63,20 +65,20 @@
                                         {{ $item->sifat }}
                                     </td>
                                     <td>
-                                        @if ($item->status == "diperiksa")
+                                        @if ($item->status == 'diperiksa')
                                             <span class="badge bg-info">{{ $item->status }}</span>
-                                        @elseif($item->status == "pending")
+                                        @elseif($item->status == 'pending')
                                             <span class="badge bg-warning">{{ $item->status }}</span>
-                                        @elseif($item->status == "proses")
+                                        @elseif($item->status == 'proses')
                                             <span class="badge bg-info">{{ $item->status }}</span>
-                                        @elseif($item->status == "ditolak")
+                                        @elseif($item->status == 'ditolak')
                                             <span class="badge bg-danger">{{ $item->status }}</span>
-                                        @elseif($item->status == "selesai")
+                                        @elseif($item->status == 'selesai')
                                             <span class="badge bg-success">{{ $item->status }}</span>
                                         @else
                                             <span class="badge bg-dafult">{{ $item->status }}</span>
                                         @endif
-                                        @if($item->status == "diperiksa")
+                                        @if ($item->status == 'diperiksa')
                                             <br>
                                             <b><i>Diperiksa Oleh : {{ $item->pemeriksa->nama }}</i></b>
                                         @endif
@@ -85,7 +87,20 @@
                                         {{ $item->user->nama }}
                                     </td>
                                     <td>
-                                        <a href="{{ route('surat.show',$item->id) }}" class="btn btn-warning btn-sm"><i class="fas fa-eye"></i> Detail</a>
+                                        <a href="{{ route('surat.show', $item->id) }}" class="btn btn-info btn-sm"><i
+                                                class="fas fa-eye"></i> Detail</a>
+                                        @if (Auth::user()->id == $item->user_id)
+                                            <a href="{{ route('surat.edit', $item->id) }}"
+                                                class="btn btn-warning  btn-sm mx-1"><i class="fas fa-edit"></i>
+                                                Edit</a>
+                                            <form action="{{ route('surat.destroy', $item->id) }}" method="POST"
+                                                class="d-inline mx-1">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="btn btn-danger hapus-data btn-sm"><i class="fas fa-trash"></i>
+                                                    Hapus</button>
+                                            </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

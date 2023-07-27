@@ -234,7 +234,27 @@
 
   <!-- Volt JS -->
   <script src="{{ url('/') }}/js/volt.js"></script>
-
+  <script>
+    document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('hapus-data')) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Apakah anda yakin?',
+                    text: "Data yang dihapus tidak dapat dikembalikan!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Ya, hapus data!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        e.target.closest('form').submit();
+                    }
+                })
+            }
+        });
+  </script>
   @stack('scripts')
 </body>
 

@@ -51,11 +51,13 @@ Route::group(['middleware'=>['auth']],function(){
     Route::get('surat/{surat}/download-pdf',[SuratController::class,'downloadPdf'])->name('surat.download-pdf');
     Route::get('surat/{surat}/view-berkas/{berkas}',[SuratController::class,'viewBerkas'])->name('surat.view-berkas');
     Route::post('surat/{surat}/disposisi',[SuratController::class,'disposisi'])->name('surat.disposisi');
+    Route::post('/surat/{id}/ubah-lampiran',[SuratController::class,'ubahLampiran'])->name('surat.ubah-lampiran');
     Route::group(['prefix'=>'disposisi-surat'],function(){
         Route::get('/',[DisposisiSuratController::class,'index'])->name('disposisi-surat.index');
         Route::post('/{surat}',[DisposisiSuratController::class,'show'])->name('disposisi-surat.show');
     });
     Route::resource('/user',UserController::class);
+    Route::post('/user/{id}/test-notifikasi',[UserController::class,'testNotifikasi'])->name('user.test-notifikasi');
     Route::group(['prefix'=>'berkas'],function(){
         Route::post('upload', [BerkasController::class, 'upload'])->name('berkas.upload');
         Route::post('upload/delete', [BerkasController::class, 'uploadDelete'])->name('berkas.upload-delete');

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Helpers\NotificationHelper;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -30,7 +31,9 @@ class NotifWa implements ShouldQueue
         }
         $this->no = str_replace("-", "", $this->no);
 
-        $this->message = $message;
+        $this->message = "NOTIFIKASI - " . env("APP_NAME") . "\n
+----------------------------------------------------\n
+        " . $message;
     }
 
     /**
@@ -43,36 +46,6 @@ class NotifWa implements ShouldQueue
         //check if first no is 0 and replace with 62
 
 
-        $client = new \GuzzleHttp\Client();
-        if (env("WA_API_KEY") != "" && env("WA_API_URL") != null) {
-            $res = $client->request('POST', env("WA_API_URL") . env("WA_API_KEY"), [
-                'form_params' => [
-                    'id' => $this->no,
-                    'message' => "NOTIFIKASI - " . env("APP_NAME") . "\n
-----------------------------------------------------\n
-" . $this->message,
-                ]
-            ]);
-
-
-            Log::info($res->getStatusCode());
-        } else {
-            $url = env("WA_API_URL");
-            $session = env("WA_SESSION_NAME");
-            $res = $client->request('POST', $url, [
-                'form_params' => [
-                    'session' => $session,
-                    'to' => $this->no,
-                    'text' => "NOTIFIKASI - " . env("APP_NAME") . "\n
-----------------------------------------------------\n
-" . $this->message,
-                ]
-            ]);
-            Log::info($res->getStatusCode());
-        }
-
-        // if((int)$res->getStatusCode() != 200){
-        //     throw new Exception("Error Processing Request", 1);
-        // }
+        NotificationHelper::sendWa($this->no,$this->message);
     }
 }

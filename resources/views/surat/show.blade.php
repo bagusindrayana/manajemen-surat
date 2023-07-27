@@ -187,7 +187,7 @@
                         <form action="{{ route('surat.destroy', $surat->id) }}" method="POST" class="d-inline mx-2">
                             @csrf
                             @method('DELETE')
-                            <button class="btn btn-danger"><i class="fas fa-trash"></i> Hapus</button>
+                            <button class="btn btn-danger hapus-data"><i class="fas fa-trash"></i> Hapus</button>
                         </form>
                     @endif
 
@@ -255,7 +255,7 @@
                 <div class="card-header">
                     Lampiran Surat/Berkas <small><b>
                             @if ($stillUpload)
-                                Upload Ke Cloud...
+                                Prosess Upload Ke Cloud...
                             @endif
                         </b></small>
                 </div>
@@ -263,43 +263,53 @@
                 <div class="card-body table-responsive">
 
 
-                    <table class="table table-centered table-nowrap mb-0 rounded">
-                        <thead class="thead-light">
-                            <tr>
-                                <th class="border-0 rounded-start">#</th>
-                                <th class="border-0">Name</th>
-                                <th class="border-0">Mime Type</th>
-                                <th class="border-0">Size</th>
-                                <th class="border-0">Detail</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($surat->berkas as $item)
+                    <form action="{{ route('surat.ubah-lampiran',$surat->id) }}" method="POST">
+                        @csrf
+                        <table class="table table-centered table-nowrap mb-0 rounded">
+                            <thead class="thead-light">
                                 <tr>
-                                    <td>
-                                        {{ $loop->iteration }}
-                                    </td>
-                                    <td>
-                                        {{ $item->nama_berkas }}
-                                    </td>
-                                    <td>
-                                        {{ $item->mime_type }}
-                                    </td>
-                                    <td>
-                                        {{ StorageHelper::formatBytes($item->size) }}
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('surat.view-berkas', [$surat->id, $item->id]) }}" target="_blank"
-                                            class="btn btn-success text-white"><i class="fas fa-file"></i></a>
-                                        <button type="button" data-bs-toggle="modal"
-                                            data-bs-target="#modal-cloud-list-{{ $item->id }}"
-                                            class="btn btn-info text-white"><i class="fas fa-cloud"></i></button>
-                                    </td>
-
+                                    <th class="border-0 rounded-start">#</th>
+                                    <th class="border-0">Name</th>
+                                    <th class="border-0">Mime Type</th>
+                                    <th class="border-0">Size</th>
+                                    <th class="border-0">Detail</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach ($surat->berkas as $item)
+                                    <tr>
+                                        <td>
+                                            {{ $loop->iteration }}
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control" name="nama_berkas[{{$item->id}}]" value="{{ $item->nama_berkas }}">
+                                        </td>
+                                        <td>
+                                            {{ $item->mime_type }}
+                                        </td>
+                                        <td>
+                                            {{ StorageHelper::formatBytes($item->size) }}
+                                        </td>
+                                        <td>
+                                            <a href="{{ route('surat.view-berkas', [$surat->id, $item->id]) }}" target="_blank"
+                                                class="btn btn-success text-white"><i class="fas fa-file"></i></a>
+                                            <button type="button" data-bs-toggle="modal"
+                                                data-bs-target="#modal-cloud-list-{{ $item->id }}"
+                                                class="btn btn-info text-white"><i class="fas fa-cloud"></i></button>
+                                        </td>
+    
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5">
+                                        <button class="btn btn-info btn-sm">Simpan Nama Lampiran</button>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </form>
                 </div>
             </div>
         </div>
