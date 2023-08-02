@@ -1,5 +1,5 @@
 <div class="mb-4">
-    <label for="name">Storage Name</label>
+    <label for="name">Storage Name <small class="text-danger">*</small></label>
     <input type="text" name="name" required class="form-control" id="name" aria-describedby="name"
         placeholder="Storage name..." value="{{ old('name', @$cloudStorage->name) }}">
 
@@ -50,10 +50,10 @@
             data-bs-toggle="modal" data-bs-target="#modal-local"><i class="far fa-hdd"></i> Local</button> --}}
         <button name="type" type="button" value="google" class="btn btn-pill btn-outline-gray-500 me-2"
             data-bs-toggle="modal" data-bs-target="#modal-google"><i class="fab fa-google-drive"></i> Google Drive</button>
-        <button name="type" type="button" value="local" class="btn btn-pill btn-outline-gray-500 me-2"
+        {{-- <button name="type" type="button" value="local" class="btn btn-pill btn-outline-gray-500 me-2"
             data-bs-toggle="modal" data-bs-target="#modal-s3"><i class="fas fa-cloud"></i> S3</button>
         <button name="type" type="button" value="local" class="btn btn-pill btn-outline-gray-500 me-2"
-            data-bs-toggle="modal" data-bs-target="#modal-ftp"><i class="fa-solid fa-folder-tree"></i> FTP</button>
+            data-bs-toggle="modal" data-bs-target="#modal-ftp"><i class="fa-solid fa-folder-tree"></i> FTP</button> --}}
     @endisset
 </div>
 

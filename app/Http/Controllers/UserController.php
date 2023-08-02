@@ -22,7 +22,7 @@ class UserController extends Controller
         if(!auth()->user()->can('View User'))
             return abort(403,'Anda tidak memiliki cukup hak akses');
         $data = [
-            'users'=>User::paginate(10),
+            'users'=>User::filtersInput(null, 'search')->paginate(10),
             'title'=>'User'
         ];
 
@@ -53,9 +53,9 @@ class UserController extends Controller
     public function store(Request $request)
     {   
         $request->validate([
-            'nama'=>'required',
-            'username'=>'required|string|unique:users,username',
-            'password'=>'required|string|min:6',
+            'nama'=>'required|max:150',
+            'username'=>'required|string|min:5|max:20|unique:users,username',
+            'password'=>'required|string|min:5|max:50',
         ]);
         DB::beginTransaction();
         try {
@@ -67,10 +67,26 @@ class UserController extends Controller
             // $user->no_telp = $request->no_telp;
             $user->save();
             foreach ($request->kontak ?? [] as $index => $kontak) {
-                $user->kontak_notifikasis()->create([
-                    'kontak'=>$kontak,
-                    'type'=>$request->type[$index]
-                ]);
+                
+                if($kontak == null){
+                    throw new \Exception("Kontak tidak boleh kosong");
+                } else {
+                    //validate kontak email
+                    if($request->type[$index] == "email"){
+                        if(!filter_var($kontak, FILTER_VALIDATE_EMAIL)){
+                            throw new \Exception("Kontak email tidak valid");
+                        }
+                    }
+                    if($request->type[$index] == "wa"){
+                        if(!preg_match('/^[0-9,+]+$/', $kontak)){
+                            throw new \Exception("Kontak whatsapp tidak valid");
+                        }
+                    }
+                    $user->kontak_notifikasis()->create([
+                        'kontak'=>$kontak,
+                        'type'=>$request->type[$index]
+                    ]);
+                }
             }
             //asign role_id
             $user->roles()->attach($request->role_id);
@@ -79,7 +95,7 @@ class UserController extends Controller
             return redirect()->route('user.index')->with('success','User berhasil ditambahkan');
         } catch (\Throwable $th) {
             DB::rollback();
-            return redirect()->route('user.index')->with('error','User gagal ditambahkan : '.$th->getMessage());
+            return redirect()->back()->with('error','User gagal ditambahkan : '.$th->getMessage());
         } 
     }
 
@@ -110,7 +126,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $data = [
-            'title'=>'Edit User',
+            'title'=>'Ubah User',
             'user'=>$user,
             'roles'=>Role::all()
         ];
@@ -128,8 +144,8 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'nama'=>'required',
-            'username'=>'required|string|unique:users,username,'.$user->id,
+            'nama'=>'required|max:150',
+            'username'=>'required|string|min:5|max:20|unique:users,username,'.$user->id,
             
         ]);
         DB::beginTransaction();
@@ -138,7 +154,7 @@ class UserController extends Controller
             $user->username = $request->username;
             if($request->has('ubah_password')){
                 $request->validate([
-                    'password'=>'required|string|min:6',
+                    'password'=>'required|string|min:5|max:50',
                 ]);
                 $user->password = bcrypt($request->password);
             }
@@ -147,10 +163,25 @@ class UserController extends Controller
             $user->save();
             $user->kontak_notifikasis()->delete();
             foreach ($request->kontak ?? [] as $index => $kontak) {
-                $user->kontak_notifikasis()->create([
-                    'kontak'=>$kontak,
-                    'type'=>$request->type[$index]
-                ]);
+                if($kontak == null){
+                    throw new \Exception("Kontak tidak boleh kosong");
+                } else {
+                    //validate kontak email
+                    if($request->type[$index] == "email"){
+                        if(!filter_var($kontak, FILTER_VALIDATE_EMAIL)){
+                            throw new \Exception("Kontak email tidak valid");
+                        }
+                    }
+                    if($request->type[$index] == "wa"){
+                        if(!preg_match('/^[0-9,+]+$/', $kontak)){
+                            throw new \Exception("Kontak whatsapp tidak valid");
+                        }
+                    }
+                    $user->kontak_notifikasis()->create([
+                        'kontak'=>$kontak,
+                        'type'=>$request->type[$index]
+                    ]);
+                }
             }
             //asign role_id
             $user->roles()->sync($request->role_id);
@@ -159,7 +190,7 @@ class UserController extends Controller
             return redirect()->route('user.index')->with('success','User berhasil ubah');
         } catch (\Throwable $th) {
             DB::rollback();
-            return redirect()->route('user.index')->with('error','User gagal ubah : '.$th->getMessage());
+            return redirect()->back()->with('error','User gagal ubah : '.$th->getMessage());
         }
     }
 
@@ -170,7 +201,10 @@ class UserController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy(User $user)
-    {
+    {   
+        if($user->id == 1){
+            return redirect()->route('user.index')->with('error','User gagal dihapus : User ini tidak dapat dihapus');
+        }
         DB::beginTransaction();
         try {
             $user->delete();

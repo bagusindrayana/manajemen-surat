@@ -28,6 +28,19 @@ class User extends Authenticatable
         'no_telp',
     ];
 
+    protected $filterFields = [
+        'nama',
+        'username',
+        'password',
+        'email',
+        'no_telp',
+        [
+            'kontak_notifikasis'=>[
+                'kontak'
+            ]
+        ]
+    ];
+
     /**
      * The attributes that should be hidden for serialization.
      *

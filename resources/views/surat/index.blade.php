@@ -29,10 +29,12 @@
                                 </div>
                             </form>
                         </div>
-                        <div class="col-md-6 text-end py-2">
-                            <a href="{{ route('surat.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i>
-                                Tambah</a>
-                        </div>
+                        @if (auth()->user()->can('Create Surat'))
+                            <div class="col-md-6 text-end py-2">
+                                <a href="{{ route('surat.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i>
+                                    Tambah</a>
+                            </div>
+                        @endif
                     </div>
 
                 </div>
@@ -89,10 +91,10 @@
                                     <td>
                                         <a href="{{ route('surat.show', $item->id) }}" class="btn btn-info btn-sm"><i
                                                 class="fas fa-eye"></i> Detail</a>
-                                        @if (Auth::user()->id == $item->user_id)
+                                        @if (Auth::user()->id == $item->user_id || $view_all)
                                             <a href="{{ route('surat.edit', $item->id) }}"
                                                 class="btn btn-warning  btn-sm mx-1"><i class="fas fa-edit"></i>
-                                                Edit</a>
+                                                Ubah</a>
                                             <form action="{{ route('surat.destroy', $item->id) }}" method="POST"
                                                 class="d-inline mx-1">
                                                 @csrf

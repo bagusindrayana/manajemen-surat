@@ -144,8 +144,8 @@ class BerkasController extends Controller
         $extension = $file->getClientOriginalExtension();
         $filename = str_replace("." . $extension, "", $file->getClientOriginalName()); // Filename without extension
 
-        // Add timestamp hash to name of the file
-        $filename .= "_" . md5(time()) . "." . $extension;
+        // Add timestamp to name of the file
+        $filename .= "_" . time() . "." . $extension;
 
         return $filename;
     }

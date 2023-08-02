@@ -68,7 +68,7 @@
                 <td colspan="3">
                     <ul>
                         @foreach ($surat->disposisis as $item)
-                            <li>{{ $item->kepada }}</li>
+                            <li>{{ $item->kepada }} : {{ $item->status }}</li>
                         @endforeach
                     </ul>
                 </td>

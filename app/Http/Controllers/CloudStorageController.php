@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\StorageHelper;
+use App\Helpers\UserLogHelper;
 use App\Models\CloudStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -100,6 +101,7 @@ class CloudStorageController extends Controller
                     ])
                 ]);
             }
+            UserLogHelper::create('menambah cloud storage baru dengan nama : '.$cs->name);
             DB::commit();
             return redirect()->route('cloud-storage.index')->with('success', 'Storage berhasil dibuat');
         } catch (\Throwable $th) {
@@ -184,38 +186,47 @@ class CloudStorageController extends Controller
             'name' => 'required',
             'status' => 'required'
         ]);
-        $cloudStorage->update([
-            'name' => $request->name,
-            'type' => $request->ubah_type ? $request->type : $cloudStorage->type,
-            'status' => $request->status
-        ]);
-
-        if ($cloudStorage->type == "s3") {
+        DB::beginTransaction();
+        try {
             $cloudStorage->update([
-                'setting_json' => json_encode([
-                    'access_key_id' => $request->access_key_id,
-                    'secret_access_key' => $request->secret_access_key,
-                    'region' => $request->region,
-                    'bucket' => $request->bucket ?? 'us-east-1',
-                ])
+                'name' => $request->name,
+                'type' => $request->ubah_type ? $request->type : $cloudStorage->type,
+                'status' => $request->status
             ]);
+            UserLogHelper::create('mengubah cloud storage dengan nama : '.$cloudStorage->name);
+    
+            if ($cloudStorage->type == "s3") {
+                $cloudStorage->update([
+                    'setting_json' => json_encode([
+                        'access_key_id' => $request->access_key_id,
+                        'secret_access_key' => $request->secret_access_key,
+                        'region' => $request->region,
+                        'bucket' => $request->bucket ?? 'us-east-1',
+                    ])
+                ]);
+            }
+    
+            if ($cloudStorage->type == "ftp") {
+                $cloudStorage->update([
+                    'setting_json' => json_encode([
+                        'host' => $request->host,
+                        'port' => $request->port,
+                        'username' => $request->username,
+                        'password' => $request->password,
+                        'root' => $request->root,
+                    ])
+                ]);
+            }
+            DB::commit();
+            if ($request->type == "google") {
+                return redirect()->route('cloud-storage.login-google')->with('cs_id', $cloudStorage->id);
+            }
+            return redirect()->route('cloud-storage.index')->with('success', 'Storage berhasil simpan');
+        } catch (\Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Storage gagal simpan')->withInput($request->all());
         }
-
-        if ($cloudStorage->type == "ftp") {
-            $cloudStorage->update([
-                'setting_json' => json_encode([
-                    'host' => $request->host,
-                    'port' => $request->port,
-                    'username' => $request->username,
-                    'password' => $request->password,
-                    'root' => $request->root,
-                ])
-            ]);
-        }
-        if ($request->type == "google") {
-            return redirect()->route('cloud-storage.login-google')->with('cs_id', $cloudStorage->id);
-        }
-        return redirect()->route('cloud-storage.index')->with('success', 'Storage berhasil dibuat');
     }
 
     /**
@@ -243,6 +254,7 @@ class CloudStorageController extends Controller
                     $oauth2->getClient()->revokeToken();
                 }
             }
+            UserLogHelper::create('menghapus cloud storage dengan nama : '.$cloudStorage->name);
             DB::commit();
             return redirect()->route('cloud-storage.index')->with('success', 'Storage berhasil dihapus');
         } catch (\Throwable $th) {

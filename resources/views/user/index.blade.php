@@ -62,12 +62,14 @@
                                     <td>
                                         <a href="{{ route('user.show',$item->id) }}" class="btn btn-info btn-sm"><i class="fas fa-eye"></i> Detail</a>
                                         <a href="{{ route('user.edit', @$item->id) }}" class="btn btn-warning btn-sm mx-1"><i class="fas fa-edit"></i>
-                                            Edit</a>
-                                        <form action="{{ route('user.destroy', $item->id) }}" method="POST" class="d-inline mx-1">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="btn btn-danger btn-sm hapus-data"><i class="fas fa-trash"></i> Hapus</button>
-                                        </form>
+                                            Ubah</a>
+                                        @if (auth()->user()->id != $item->id && $item->id != 1)
+                                            <form action="{{ route('user.destroy', $item->id) }}" method="POST" class="d-inline mx-1">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="btn btn-danger btn-sm hapus-data"><i class="fas fa-trash"></i> Hapus</button>
+                                            </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

@@ -246,6 +246,20 @@ class CloudStorage extends Model
                     )
                 );
 
+                //set permission to public
+                // $drive->getClient()->setAccessToken($setting->access_token);
+                // $drive->getClient()->getAccessToken();
+                // $drive->getClient()->setUseBatch(true);
+                // $batch = $drive->createBatch();
+                // $permission = new \Google_Service_Drive_Permission();
+                // $permission->setRole('commenter');
+                // $permission->setType('user');
+                // $permission->setEmailAddress('<Email Address>');
+                // $request = $drive->permissions->create(
+                //     $_upload->id,
+                //     $permission
+                // );
+
                 //result path
                 $result = $_upload->id;
                
@@ -283,6 +297,40 @@ class CloudStorage extends Model
                 }
                 
                 
+                break;
+            default:
+                # code...
+                break;
+        }
+
+        return $result;
+    }
+
+    //make scope to delete file from google drive
+    public function scopeDeleteFile($q, $path)
+    {
+        $setting = $this->setting;
+        $result = null;
+        switch ($this->type) {
+            case 'google':
+                $drive = Google::make('drive');
+                $setting = StorageHelper::createRefreshToken($this);
+                $drive->getClient()->setAccessType('offline');
+                $drive->getClient()->setApprovalPrompt("force");
+                $drive->getClient()->setAccessToken($setting->access_token);
+
+                $drive->files->delete($path);
+                break;
+            case 'local':
+                Storage::delete($path);
+                break;
+            case 's3':
+                $storage = $this->driver;
+                $storage->delete($path);
+                break;
+            case 'ftp':
+                $storage = $this->driver;
+                $storage->delete($path);
                 break;
             default:
                 # code...

@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('berkas', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('surat_id')->index();
-            $table->string('nama_berkas');
-            $table->string('path');
+            $table->string('nama_berkas',150);
+            $table->string('path',150);
             $table->text('isi_berkas')->nullable();
             $table->text('keterangan')->nullable();
             $table->string('mime_type',100);

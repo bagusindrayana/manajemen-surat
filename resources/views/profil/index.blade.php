@@ -22,11 +22,11 @@
                         <button name="type" type="button" value="google" class="btn btn-pill btn-outline-gray-500 me-2"
                             data-bs-toggle="modal" data-bs-target="#modal-google"><i class="fab fa-google-drive"></i> Google
                             Drive</button>
-                        <button name="type" type="button" value="local" class="btn btn-pill btn-outline-gray-500 me-2"
+                        {{-- <button name="type" type="button" value="local" class="btn btn-pill btn-outline-gray-500 me-2"
                             data-bs-toggle="modal" data-bs-target="#modal-s3"><i class="fas fa-cloud"></i> S3</button>
                         <button name="type" type="button" value="local" class="btn btn-pill btn-outline-gray-500 me-2"
                             data-bs-toggle="modal" data-bs-target="#modal-ftp"><i class="fa-solid fa-folder-tree"></i>
-                            FTP</button>
+                            FTP</button> --}}
 
                     </div>
                     <div class="modal-footer">
@@ -110,7 +110,7 @@
                         <div class="mb-4">
                             <label for="nama">Nama</label>
                             <input type="text" name="nama" required class="form-control" id="nama"
-                                aria-describedby="nama" placeholder="Nama..." value="{{ old('nama', @$user->nama) }}">
+                                aria-describedby="nama" placeholder="Nama..." maxlength="150" value="{{ old('nama', @$user->nama) }}">
                             @error('nama')
                                 <div class="alert alert-danger">{{ $message }}</div>
                             @enderror
@@ -119,7 +119,7 @@
                         <div class="mb-4">
                             <label for="username">Username</label>
                             <input type="text" name="username" required class="form-control" id="username"
-                                aria-describedby="username" placeholder="Username..."
+                                aria-describedby="username" placeholder="Username..." minlength="5" maxlength="20"
                                 value="{{ old('username', @$user->username) }}">
                             @error('username')
                                 <div class="alert alert-danger">{{ $message }}</div>
@@ -137,7 +137,7 @@
                                     <label for="new_password">Password Baru</label>
                                     <input type="password" name="new_password" x-bind:required="ubahPassword"
                                         class="form-control" id="new_password" aria-describedby="new_password"
-                                        placeholder="Password..." value="" autocomplete="off" minlength="6">
+                                        placeholder="Password..." value="" autocomplete="off" minlength="5" maxlength="50">
                                     @error('new_password')
                                         <div class="alert alert-danger">{{ $message }}</div>
                                     @enderror
@@ -186,9 +186,9 @@
                                                 </option>
                                                 <option value="wa" x-bind:selected="field.type == 'wa'">Whatsapp
                                                 </option>
-                                                <option value="telegram" x-bind:selected="field.type == 'telegram'">
+                                                {{-- <option value="telegram" x-bind:selected="field.type == 'telegram'">
                                                     Telegram
-                                                </option>
+                                                </option> --}}
                                                 {{-- <option value="push" x-bind:selected="field.type == 'push'">Browser Notification</option> --}}
                                             </select>
                                         </td>

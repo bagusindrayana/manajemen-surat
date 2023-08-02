@@ -24,7 +24,9 @@ class SuratDisposisi extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withDefault([
+            'nama'=>'User Di Hapus'
+        ]);
     }
 
     public function role()
@@ -34,7 +36,7 @@ class SuratDisposisi extends Model
 
     public function getKepadaAttribute()
     {
-        return $this->user->nama ?? $this->role->name;
+        return $this->user->id != null ? $this->user->nama : $this->role->name;
     }
 
     public function riwayat_disposisis()

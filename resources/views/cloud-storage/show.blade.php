@@ -6,7 +6,7 @@
             <div class="card">
                 <div class="card-header">
                     <a href="{{ route('cloud-storage.index') }}" class="btn btn-primary mx-2"><i class="fas fa-angle-left"></i> Kembali</a>
-                    <a href="{{ route('cloud-storage.edit',$cloudStorage->id) }}" class="btn btn-warning mx-2"><i class="fas fa-edit"></i> Edit</a>
+                    <a href="{{ route('cloud-storage.edit',$cloudStorage->id) }}" class="btn btn-warning mx-2"><i class="fas fa-edit"></i> Ubah</a>
                     <form action="{{ route('cloud-storage.destroy',$cloudStorage->id) }}" method="POST" class="d-inline mx-2">
                         @csrf
                         @method('DELETE')

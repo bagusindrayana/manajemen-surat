@@ -38,4 +38,19 @@ class BerkasStorage extends Model
                 break;
         }
     }
+
+    public function getDownloadLinkAttribute()
+    {
+        $link = "";
+        switch ($this->storage->type) {
+            case 'google':
+                $link = "https://drive.google.com/uc?export=download&id=".$this->path;
+                break;
+            
+            default:
+                # code...
+                break;
+        }
+    }
+
 }

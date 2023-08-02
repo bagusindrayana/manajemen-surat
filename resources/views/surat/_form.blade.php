@@ -129,10 +129,10 @@
         
                                     <td>
                                         <a href="{{ route('surat.view-berkas', [$surat->id, $item->id]) }}" target="_blank"
-                                            class="btn btn-success btn-sm text-white"><i class="fas fa-file"></i></a>
+                                            class="btn btn-success btn-sm text-white" title="Lihat File Lampiran - {{ $item->nama_berkas }}"><i class="fas fa-file"></i></a>
                                     
                                             <button type="button"
-                                            class="btn btn-danger btn-sm text-white btn-delete-berkas"><i class="fas fa-trash"></i></button>
+                                            class="btn btn-danger btn-sm text-white btn-delete-berkas" title="Hapus File Lampiran - {{ $item->nama_berkas }}"><i class="fas fa-trash"></i></button>
                                     </td>
 
                                 </tr>
@@ -358,7 +358,7 @@
             // If true, the individual chunks of a file are being uploaded simultaneously.
             //parallelChunkUploads: true
             // accept only image,pdf and word document
-            acceptedFiles: 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx',
+            acceptedFiles: 'image/*,.pdf,.doc,.docx',
             addRemoveLinks: true,
             init: function() {
                 this.on('maxfilesexceeded', function(file) {
@@ -378,6 +378,10 @@
                 }
             },
             removedfile: function(file) {
+                if(file.status == "error"){
+                    file.previewElement.remove();
+                    return true;
+                }
                 x = confirm('Do you want to delete?');
                 if (!x) return false;
                 var name = file.name;

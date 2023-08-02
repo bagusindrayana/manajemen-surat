@@ -16,17 +16,17 @@ class RoleController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {   
+    {
         //check if user can View Role
-        if(!auth()->user()->can('View Role'))
-            return abort(403,'Anda tidak memiliki cukup hak akses');
+        if (!auth()->user()->can('View Role'))
+            return abort(403, 'Anda tidak memiliki cukup hak akses');
         $roles = Role::filtersInput(null, 'search')->paginate(10);
         $data = [
-            'title'=>'Jabatan/Role',
-            'roles'=>$roles
+            'title' => 'Jabatan/Role',
+            'roles' => $roles
         ];
 
-        return view('role.index',$data);
+        return view('role.index', $data);
     }
 
     /**
@@ -38,10 +38,10 @@ class RoleController extends Controller
     {
         $groups = GroupPermission::with('permissions')->get();
         $data = [
-            'title'=>'Detail Jabatan/Role',
-            'groups'=>$groups
+            'title' => 'Tambah Jabatan/Role',
+            'groups' => $groups
         ];
-        return view('role.create',$data);
+        return view('role.create', $data);
     }
 
     /**
@@ -51,22 +51,26 @@ class RoleController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {   
-
+    {
+        $request->validate([
+            'name' => 'required|max:150|unique:roles,name',
+            'description' => 'nullable|max:255',
+            'permission_ids' => 'required|array'
+        ]);
         DB::beginTransaction();
         try {
             $role = Role::create([
-                'name'=>$request->name,
-                'description'=>$request->description
+                'name' => $request->name,
+                'description' => $request->description
             ]);
             $permission_ids = $request->permission_ids;
             $role->permissions()->attach($permission_ids);
-            UserLogHelper::create('menambah data role baru dengan nama : '.$role->name);
+            UserLogHelper::create('menambah data role baru dengan nama : ' . $role->name);
             DB::commit();
-            return redirect()->route('role.index')->with('success','Data berhasil disimpan');
+            return redirect()->route('role.index')->with('success', 'Data berhasil disimpan');
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->route('role.index')->with('error','Data gagal disimpan')->withInput($request->all());
+            return redirect()->route('role.index')->with('error', 'Data gagal disimpan')->withInput($request->all());
         }
     }
 
@@ -77,12 +81,12 @@ class RoleController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(Role $role)
-    {   
+    {
         $data = [
-            'title'=>'Detail Jabatan/Role',
-            'role'=>$role
+            'title' => 'Detail Jabatan/Role',
+            'role' => $role
         ];
-        return view('role.show',$data);
+        return view('role.show', $data);
     }
 
     /**
@@ -94,7 +98,9 @@ class RoleController extends Controller
     public function edit(Role $role)
     {
         $groups = GroupPermission::with('permissions')->get();
-        return view('role.edit',compact('groups','role'));
+        return view('role.edit', compact('groups', 'role'), [
+            'title' => 'Ubah Jabatan/Role'
+        ]);
     }
 
     /**
@@ -106,20 +112,25 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role)
     {
+        $request->validate([
+            'name' => 'required|max:150|unique:roles,name,' . $role->id,
+            'description' => 'nullable|max:255',
+            'permission_ids' => 'required|array'
+        ]);
         DB::beginTransaction();
         try {
             $role->update([
-                'name'=>$request->name,
-                'description'=>$request->description
+                'name' => $request->name,
+                'description' => $request->description
             ]);
             $permission_ids = $request->permission_ids;
             $role->permissions()->sync($permission_ids);
-            UserLogHelper::create('mengubah role : '.$role->name);
+            UserLogHelper::create('mengubah role : ' . $role->name);
             DB::commit();
-            return redirect()->route('role.index')->with('success','Data berhasil disimpan');
+            return redirect()->route('role.index')->with('success', 'Data berhasil disimpan');
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->route('role.index')->with('error','Data gagal disimpan')->withInput($request->all());
+            return redirect()->route('role.index')->with('error', 'Data gagal disimpan')->withInput($request->all());
         }
     }
 
@@ -130,19 +141,19 @@ class RoleController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy(Role $role)
-    {   
-        if($role->users()->count() > 0){
-            return redirect()->route('role.index')->with('error','Data gagal dihapus, karena masih ada user yang menggunakan role ini');
+    {
+        if ($role->users()->count() > 0) {
+            return redirect()->route('role.index')->with('error', 'Data gagal dihapus, karena masih ada user yang menggunakan role ini');
         }
         DB::beginTransaction();
         try {
             $role->delete();
-            UserLogHelper::create('mengahpus role : '.$role->name);
+            UserLogHelper::create('menghapus role : ' . $role->name);
             DB::commit();
-            return redirect()->route('role.index')->with('success','Data berhasil dihapus');
+            return redirect()->route('role.index')->with('success', 'Data berhasil dihapus');
         } catch (\Throwable $th) {
             DB::rollBack();
-            return redirect()->route('role.index')->with('error','Data gagal dihapus');
+            return redirect()->route('role.index')->with('error', 'Data gagal dihapus');
         }
     }
 }

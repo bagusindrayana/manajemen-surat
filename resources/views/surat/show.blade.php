@@ -15,6 +15,16 @@
 @endpush
 
 @push('scripts')
+    @if ($surat->status == 'diperiksa' && $surat->pemeriksa_id == auth()->user()->id)
+        <script>
+            //scroll to #form-disposisi
+            document.querySelector('#berikan_disposisi').scrollIntoView({
+                behavior: 'smooth'
+            });
+            location.href = "#";
+            location.href = "#berikan_disposisi";
+        </script>
+    @endif
     <script>
         function handler() {
             const user_ids = {!! json_encode(old('user_id', [])) !!};
@@ -40,7 +50,10 @@
                 xhr.onload = function() {
                     if (xhr.status === 200) {
                         const data = JSON.parse(xhr.responseText);
-                        let options = '<option value="0">Semua User Di Jabatan</option>';
+                        if(data.length == 0){
+                            alert("Tidak ada user yang bisa di disposisikan");
+                        }
+                        let options = '<option value="">Semua User Di Jabatan</option>';
                         // let options2 =
                         //     '<option value="">Langsung Dikirim</option><option value="0">Semua User Di Jabatan</option>';
                         data.forEach(function(user) {
@@ -77,6 +90,7 @@
 
             }
             setTimeout(() => {
+                
                 for (let x = 0; x < _fields.length; x++) {
                     const f = _fields[x];
                     createOption(role_ids[x], document.querySelector('#list-' + x), x);
@@ -117,8 +131,8 @@
 @endpush
 
 @section('content')
-    @foreach ($surat->berkas as $item)
-        <div class="modal fade" id="modal-cloud-list-{{ $item->id }}" tabindex="-1" role="dialog"
+    @foreach ($surat->berkas as $berkas)
+        <div class="modal fade" id="modal-cloud-list-{{ $berkas->id }}" tabindex="-1" role="dialog"
             aria-labelledby="modal-cloud-list" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered  modal-lg" role="document">
                 <div class="modal-content">
@@ -145,7 +159,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($item->berkas_storages as $v)
+                                @foreach ($berkas->berkas_storages as $v)
                                     <tr>
                                         <td>
                                             {{ $loop->iteration }}
@@ -157,7 +171,7 @@
                                             {{ $v->storage->type }}
                                         </td>
                                         <td>
-                                            <a href="{{ route('berkas-storage.view', $v->id) }}"
+                                            <a target="_blank" href="{{ route('berkas-storage.view', $v->id) }}"
                                                 class="btn btn-sm btn-info"><i class="fas fa-link"></i></a>
                                         </td>
                                     </tr>
@@ -183,7 +197,7 @@
                     @if (Auth::user()->id == $surat->user_id)
                         <a href="{{ route('surat.edit', $surat->id) }}" class="btn btn-warning mx-2"><i
                                 class="fas fa-edit"></i>
-                            Edit</a>
+                            Ubah</a>
                         <form action="{{ route('surat.destroy', $surat->id) }}" method="POST" class="d-inline mx-2">
                             @csrf
                             @method('DELETE')
@@ -263,7 +277,7 @@
                 <div class="card-body table-responsive">
 
 
-                    <form action="{{ route('surat.ubah-lampiran',$surat->id) }}" method="POST">
+                    <form action="{{ route('surat.ubah-lampiran', $surat->id) }}" method="POST">
                         @csrf
                         <table class="table table-centered table-nowrap mb-0 rounded">
                             <thead class="thead-light">
@@ -276,13 +290,24 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @php
+                                    $memeriksa = auth()
+                                        ->user()
+                                        ->can('Check Surat');
+                                @endphp
                                 @foreach ($surat->berkas as $item)
                                     <tr>
                                         <td>
                                             {{ $loop->iteration }}
                                         </td>
                                         <td>
-                                            <input type="text" class="form-control" name="nama_berkas[{{$item->id}}]" value="{{ $item->nama_berkas }}">
+                                            @if ($memeriksa)
+                                                <input type="text" class="form-control"
+                                                    name="nama_berkas[{{ $item->id }}]"
+                                                    value="{{ $item->nama_berkas }}" required>
+                                            @else
+                                                {{ $item->nama_berkas }}
+                                            @endif
                                         </td>
                                         <td>
                                             {{ $item->mime_type }}
@@ -291,23 +316,26 @@
                                             {{ StorageHelper::formatBytes($item->size) }}
                                         </td>
                                         <td>
-                                            <a href="{{ route('surat.view-berkas', [$surat->id, $item->id]) }}" target="_blank"
-                                                class="btn btn-success text-white"><i class="fas fa-file"></i></a>
+                                            <a href="{{ route('surat.view-berkas', [$surat->id, $item->id]) }}"
+                                                target="_blank" class="btn btn-success text-white"><i
+                                                    class="fas fa-file"></i></a>
                                             <button type="button" data-bs-toggle="modal"
                                                 data-bs-target="#modal-cloud-list-{{ $item->id }}"
                                                 class="btn btn-info text-white"><i class="fas fa-cloud"></i></button>
                                         </td>
-    
+
                                     </tr>
                                 @endforeach
                             </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="5">
-                                        <button class="btn btn-info btn-sm">Simpan Nama Lampiran</button>
-                                    </td>
-                                </tr>
-                            </tfoot>
+                            @if ($memeriksa)
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="5">
+                                            <button class="btn btn-info btn-sm">Simpan Nama Lampiran</button>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            @endif
                         </table>
                     </form>
                 </div>
@@ -323,6 +351,11 @@
                     <div class="card">
                         <div class="card-header">
                             <p>Disposisi Surat</p>
+                            @error('user_id')
+                                <div class="alert alert-danger">
+                                    Silahkan pilih user yang akan diberikan disposisi
+                                </div>
+                            @enderror
                         </div>
                         <div class="card-body table-responsive" x-data="handler()">
                             <table class="table table-centered table-nowrap mb-0 rounded">
@@ -334,11 +367,11 @@
                                         <th>
                                             Keterangan
                                         </th>
-                                        <th>
+                                        {{-- <th>
                                             Menunggu Di Setujui <i
                                                 title="apakah pengiriman disposisi ini harus menunggu persetujuan user lainnya ?"
                                                 class="fa-regular fa-circle-question " style="cursor: pointer;"></i>
-                                        </th>
+                                        </th> --}}
                                         <th>
                                             #
                                         </th>
@@ -348,8 +381,8 @@
                                     <template x-for="(field, index) in fields" :key="index">
                                         <tr x-bind:id="'list-' + index">
                                             <td>
-                                                <select x-bind:name="'role_id[' + index + ']'" class="form-control pilih-role"
-                                                    @change="getUserByRole" required>
+                                                <select x-bind:name="'role_id[' + index + ']'"
+                                                    class="form-control pilih-role" @change="getUserByRole" required>
                                                     <option value="">Pilih Jabatan/Role</option>
                                                     @foreach ($roles as $role)
                                                         <option value="{{ $role->id }}"
@@ -357,20 +390,21 @@
                                                             {{ $role->name }}</option>
                                                     @endforeach
                                                 </select>
-    
+
                                             </td>
                                             <td>
-                                                <select x-bind:name="'user_id[' + index + ']'" class="form-control pilih-user">
-                                                    <option value="0">Semua User Di Jabatan</option>
+                                                <select x-bind:name="'user_id[' + index + ']'"
+                                                    class="form-control pilih-user">
+                                                    <option value="">Semua User Di Jabatan</option>
                                                 </select>
-    
+
                                             </td>
                                             <td>
                                                 <input type="text" x-bind:name="'keterangan[' + index + ']'"
                                                     class="form-control" placeholder="Keterangan..."
                                                     x-bind:value="field.keterangan">
                                             </td>
-                                            <td>
+                                            {{-- <td>
                                                 <select x-bind:name="'menunggu_persetujuan_id[' + index + ']'"
                                                     class="form-control pilih-persetujuan">
                                                     <option value="">Langsung Dikirim</option>
@@ -381,19 +415,19 @@
                                                             {{ $role->name }}</option>
                                                     @endforeach
                                                 </select>
-                                            </td>
+                                            </td> --}}
                                             <td>
                                                 <button type="button" class="btn btn-danger btn-sm"
                                                     @click="removeField(index)"><i class="fas fa-trash"></i></button>
                                             </td>
                                         </tr>
-    
+
                                     </template>
-    
+
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="5" class="text-right text-end">
+                                        <td colspan="4" class="text-right text-end">
                                             <button type="button" class="btn btn-info" @click="addNewField">+ Tambah
                                                 Disposisi</button>
                                         </td>
@@ -406,11 +440,11 @@
             </div>
             <div class="row">
                 <div class="col-md-12">
-                    <button type="submit" class="btn btn-success text-white" name="berikan_disposisi" value="berikan_disposisi">Simpan</button>
+                    <button type="submit" class="btn btn-success text-white" name="berikan_disposisi"
+                        value="berikan_disposisi" id="berikan_disposisi">Simpan</button>
                 </div>
             </div>
         </form>
-        
     @endif
     @if ($surat->status != 'diperiksa')
         <div class="row mb-4">
@@ -422,6 +456,7 @@
                                 <p><b>Dibuat</b></p>
                                 <br>
                                 <br>
+                                <br>
                                 <u><b>{{ $surat->user->nama }}</b></u>
                                 <br>
                             </div>
@@ -429,20 +464,21 @@
                                 <div class="col-md-3 text-center border">
                                     <p><b>Disposisi</b></p>
                                     <br>
-                                    <br>
-                                    <u><b>{{ $item->user->nama ?? $item->role->name }}</b></u>
-                                    <br>
                                     @if ($item->status == 'belum')
                                         <span class="badge bg-warning">Belum</span>
                                     @endif
                                     @if ($item->status == 'diterima')
-                                        <span class="badge bg-success">Diterima</span>
+                                        <span class="badge bg-success">Diterima & Diproses</span>
                                     @endif
-                                    @if ($item->status == 'ditolak')
+                                    {{-- @if ($item->status == 'ditolak')
                                         <span class="badge bg-danger">Ditolak</span>
                                         <p>{{ $item->keterangan }}</p>
-                                    @endif
+                                    @endif --}}
                                     <br>
+                                    <br>
+                                    <u><b>{{ $item->kepada }}</b></u>
+                                    <br>
+                                    <i>Ket : {{ $item->keterangan }}</i>
                                 </div>
                             @endforeach
                         </div>
@@ -463,12 +499,13 @@
                                     placeholder="Keterangan tambahan...">{{ old('keterangan') }}</textarea>
                                 <div class="mt-2">
                                     <button type="submit" class="btn btn-success text-white" name="status"
-                                        value="diterima"><i class="fa-solid fa-check-double"></i> Terima @if (count($disposisi_berikutnya) > 0)
+                                        value="diterima"><i class="fa-solid fa-check-double"></i> Terima & Proses
+                                        {{-- @if (count($disposisi_berikutnya) > 0)
                                             & Disposisikan
-                                        @endif
+                                        @endif --}}
                                     </button>
-                                    <button type="submit" class="btn btn-danger text-white" name="status"
-                                        value="ditolak"><i class="fa-solid fa-xmark"></i> Tolak & Kembalikan</button>
+                                    {{-- <button type="submit" class="btn btn-danger text-white" name="status"
+                                        value="ditolak"><i class="fa-solid fa-xmark"></i> Tolak & Kembalikan</button> --}}
                                 </div>
                             </form>
                         @elseif (@$cek->status == 'ditolak')
@@ -497,7 +534,7 @@
                             </p>
                             <ul>
                                 @foreach ($disposisi_berikutnya as $item)
-                                    <li>{{ $item->user->nama ?? $item->role->name }}</li>
+                                    <li>{{ $item->kepada }}</li>
                                 @endforeach
                             </ul>
                             <p>

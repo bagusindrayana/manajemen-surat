@@ -25,6 +25,6 @@ class Berkas extends Model
 
     public function berkas_storages()
     {
-        return $this->hasMany(BerkasStorage::class, 'id', 'berkas_id');
+        return $this->hasMany(BerkasStorage::class, 'berkas_id', 'id');
     }
 }

@@ -40,7 +40,7 @@ class SuratController extends Controller
                 $w->where('user_id', auth()->user()->id)
                     ->orWhereHas('disposisis', function ($wd) {
                         $wd->where('user_id', auth()->user()->id)->orWhere(function ($ww) {
-                            $ww->where('user_id', 0)->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray());
+                            $ww->whereNull('user_id')->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray());
                         });
                     })->orWhere('pemeriksa_id', auth()->user()->id);
             });
@@ -48,7 +48,8 @@ class SuratController extends Controller
         $surats = $surats->orderBy('created_at', 'desc')->paginate(10)->appends(request()->input());
         $data = [
             'surats' => $surats,
-            'title' => 'Surat'
+            'title' => 'Surat',
+            'view_all' => auth()->user()->can("View All Surat")
         ];
         return view('surat.index', $data);
     }
@@ -66,9 +67,9 @@ class SuratController extends Controller
             $q->whereHas('permissions', function ($q) {
                 $q->where('name', 'Check Surat');
             });
-        })->get();
+        })->orderBy('id', 'DESC')->get();
         $roles = Role::all();
-        $storages = CloudStorage::where('status', 'active')->get();
+        $storages = CloudStorage::where('status', 'active')->where('personal',false)->get();
         $data = [
             'title' => 'Tambah Surat',
             'tmpFiles' => $tmpFiles,
@@ -92,13 +93,17 @@ class SuratController extends Controller
     {
         $movedFiles = [];
         $request->validate([
-            'nomor_surat' => 'required',
-            'tanggal_surat' => 'required',
-            'perihal' => 'required',
+            'nomor_surat' => 'required|string|max:50',
+            'tanggal_surat' => 'required|date',
+            'perihal' => 'required|string|max:200',
             'sifat' => 'required',
-            'isi' => 'required',
+            // 'isi' => 'required',
             'pemeriksa_id' => 'required',
         ]);
+        $tmpFiles = StorageHelper::getTmpFiles();
+        if (count($tmpFiles) == 0) {
+            return redirect()->back()->with('error', 'Berkas tidak boleh kosong')->withInput($request->all());
+        }
         DB::beginTransaction();
         try {
             $surat = Surat::create([
@@ -116,11 +121,20 @@ class SuratController extends Controller
             if ($request->sifat != "biasa") {
                 $type = "warning";
             }
-            NotificationHelper::createNotification($user_id, 'Surat Masuk Perlu Disposisi : \n
-Nomor : *' . $surat->nomor_surat . '* \n
-Perihal : *' . $surat->perihal . '* \n
-Sifat : *' . $surat->perihal . '* \n
-Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan Disposisi', 'surat/' . $surat->id, $type);
+            
+            $keterangan = "Surat Masuk Perlu Disposisi : \n
+Nomor : *".$surat->nomor_surat ."* \n
+Perihal : *".$surat->perihal ."* \n
+Sifat : *".$surat->perihal ."* \n
+Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan Disposisi";
+$url = 'surat/' . $surat->id;
+            $notif = Notifikasi::create([
+                'user_id' => $user_id,
+                'keterangan' => "Surat Masuk Perlu Disposisi : <br> Nomor : <b>" . $surat->nomor_surat . "</b> <br> Perihal : <b>" . $surat->perihal . "</b> <br> Sifat : <b>" . $surat->perihal . "</b>",
+                'url' => $url,
+                'type' => $type
+            ]);
+            NotificationHelper::createNotification($user_id,$keterangan , $url, $type);
             // foreach ($request->user_id as $key => $user_id) {
             //     $role_id = $request->role_id[$key];
             //     $surat->disposisis()->create([
@@ -194,24 +208,27 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
      * @param  \App\Models\Surat  $surat
      * @return \Illuminate\Http\Response
      */
-    public function show(Surat $surat)
+    public function show($id)
     {
 
+        $surat = Surat::with('berkas.berkas_storages.storage')->find($id);
         $stillUpload = DB::table('jobs')->where('payload', 'like', '%UploadCloudStorage%')->count() != 0;
         $disposisi_berikutnya = [];
         $cek = SuratDisposisi::where('surat_id', $surat->id)->where(function ($w) {
             $w->where(function ($wu) {
                 $wu->where('user_id', auth()->user()->id)->where('role_id', '!=', 0);
             })->orWhere(function ($wr) {
-                $wr->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray())->where('user_id', 0);
+                $wr->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray())->whereNull('user_id');
             });
         })->first();
         if ($cek == null && auth()->user()->id != $surat->user_id && $surat->status != "diperiksa" && $surat->pemeriksa_id != auth()->user()->id) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk melakukan disposisi');
         }
-        $disposisi_berikutnya = SuratDisposisi::where('surat_id', $surat->id)->whereIn('menunggu_persetujuan_id', auth()->user()->roles->pluck('id')->toArray())->get();
+        // $disposisi_berikutnya = SuratDisposisi::where('surat_id', $surat->id)->whereIn('menunggu_persetujuan_id', auth()->user()->roles->pluck('id')->toArray())->get();
+        $disposisi_berikutnya = SuratDisposisi::where('surat_id', $surat->id)->get();
         $users = User::where('id', '!=', auth()->user()->id)->get();
         $roles = Role::all();
+        
         $data = [
             'surat' => $surat,
             'disposisi_berikutnya' => $disposisi_berikutnya,
@@ -221,6 +238,7 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
             'roles' => $roles,
             'users' => $users,
         ];
+        
         return view('surat.show', $data);
     }
 
@@ -240,9 +258,9 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
             });
         })->get();
         $roles = Role::all();
-        $storages = CloudStorage::where('status', 'active')->get();
+        $storages = CloudStorage::where('status', 'active')->where('personal',false)->get();
         $data = [
-            'title' => 'Edit Surat',
+            'title' => 'Ubah Surat',
             'tmpFiles' => $tmpFiles,
             'users' => $users,
             'roles' => $roles,
@@ -261,8 +279,12 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Surat $surat)
-    {   
+    {
         if ($request->berikan_disposisi == "berikan_disposisi") {
+            $request->validate([
+                'role_id' => 'required|array',
+                'keterangan' => 'required|array',
+            ]);
             DB::beginTransaction();
             try {
                 $surat->update([
@@ -273,36 +295,58 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
                     $surat->disposisis()->create([
                         'user_id' => $user_id,
                         'role_id' => $role_id,
-                        'menunggu_persetujuan_id' => $request->menunggu_persetujuan_id[$key],
+                        'menunggu_persetujuan_id' => @$request->menunggu_persetujuan_id[$key] ?? null,
                         'keterangan' => $request->keterangan[$key],
                     ]);
-                    if ($request->menunggu_persetujuan_id[$key] != null) {
+                    if (isset($request->menunggu_persetujuan_id[$key]) && $request->menunggu_persetujuan_id[$key] != null) {
                         continue;
                     }
                     $type = "info";
                     if ($request->sifat != "biasa") {
                         $type = "warning";
                     }
-                    if ($user_id == 0) {
+                    $keterangan =  "
+*DISPOSISI SURAT MASUK* : \n
+Nomor : *".$surat->nomor_surat ."* \n
+Perihal : *".$surat->perihal ."* \n
+Sifat : *".$surat->perihal ."* \n
+Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk";
+                $url = 'surat/' . $surat->id;
+                
+                    if ($user_id == null) {
                         $users = User::whereHas('roles', function ($wr) use ($role_id) {
                             $wr->where('id', $role_id);
                         })->get();
+                        if(count($users) == 0){
+                            DB::rollBack();
+                            return redirect()->back()->with('error', "tidak ada user yang menerima disposisi")->withInput($request->all());
+                        }
 
                         foreach ($users as $user) {
-                            NotificationHelper::createNotification($user->id, "
-*DISPOSISI SURAT MASUK* : \n
-Nomor : *' . $surat->nomor_surat . '* \n
-Perihal : *' . $surat->perihal . '* \n
-Sifat : *' . $surat->perihal . '* \n
-Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk" . $surat->id, $type);
+                            $notif = Notifikasi::create([
+                                'user_id' => $user->id,
+                                'keterangan' => "DISPOSISI SURAT MASUK : <br> Nomor : <b>" . $surat->nomor_surat . "</b> <br> Perihal : <b>" . $surat->perihal . "</b> <br> Sifat : <b>" . $surat->perihal . "</b>",
+                                'url' => $url,
+                                'type' => $type
+                            ]);
+                            $activeStorages = CloudStorage::where('status', 'active')->where('user_id',$user->id)->where('personal', true)->get();
+                            foreach ($activeStorages as $key => $activeStorage) {
+                                dispatch(new UploadCloudStorage($surat, $activeStorage->id));
+                            }
+                            NotificationHelper::createNotification($user->id, $keterangan,$url, $type);
                         }
                     } else {
-                        NotificationHelper::createNotification($user_id, "
-*DISPOSISI SURAT MASUK* : \n
-Nomor : *' . $surat->nomor_surat . '* \n
-Perihal : *' . $surat->perihal . '* \n
-Sifat : *' . $surat->perihal . '* \n
-Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk", 'surat/' . $surat->id, $type);
+                        $activeStorages = CloudStorage::where('status', 'active')->where('user_id',$user_id)->where('personal', true)->get();
+                        foreach ($activeStorages as $key => $activeStorage) {
+                            dispatch(new UploadCloudStorage($surat, $activeStorage->id));
+                        }
+                        $notif = Notifikasi::create([
+                            'user_id' => $user_id,
+                            'keterangan' => "DISPOSISI SURAT MASUK : <br> Nomor : <b>" . $surat->nomor_surat . "</b> <br> Perihal : <b>" . $surat->perihal . "</b> <br> Sifat : <b>" . $surat->perihal . "</b>",
+                            'url' => $url,
+                            'type' => $type
+                        ]);
+                        NotificationHelper::createNotification($user_id, $keterangan,$url, $type);
                     }
                 }
                 UserLogHelper::create('memberikan disposisi surat dengan nomor : ' . $surat->nomor_surat);
@@ -336,12 +380,20 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
                     if ($request->sifat != "biasa") {
                         $type = "warning";
                     }
-                    NotificationHelper::createNotification($request->pemeriksa_id, "
-Surat Masuk Perlu Disposisi : n
-Nomor : *' . $surat->nomor_surat . '* \n
-Perihal : *' . $surat->perihal . '* \n
-Sifat : *' . $surat->perihal . '* \n
-Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan Disposisi", 'surat/' . $surat->id, $type);
+$keterangan =  "
+Surat Masuk Perlu Diperiksa & Disposisi : n
+Nomor : *".$surat->nomor_surat ."* \n
+Perihal : *".$surat->perihal ."* \n
+Sifat : *".$surat->perihal ."* \n
+Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan Disposisi";
+                $url = 'surat/' . $surat->id;
+                $notif = Notifikasi::create([
+                    'user_id' => $request->pemeriksa_id,
+                    'keterangan' => "Surat Masuk Perlu Diperiksa & Disposisi : <br> Nomor : <b>" . $surat->nomor_surat . "</b> <br> Perihal : <b>" . $surat->perihal . "</b> <br> Sifat : <b>" . $surat->perihal . "</b>",
+                    'url' => $url,
+                    'type' => $type
+                ]);
+                    NotificationHelper::createNotification($request->pemeriksa_id,$keterangan, $url, $type);
                 }
                 $surat->update($updateData);
 
@@ -403,11 +455,15 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
             $berkas = $surat->berkas;
             foreach ($berkas as $b) {
                 Storage::delete($b->path);
-                // foreach ($b->storages as $s) {
-                //     if ($s->type == "local") {
-                //         Storage::delete($b->path);
-                //     }
-                // }
+                foreach ($b->storages as $s) {
+                    try {
+                        $s->deleteFile($s->path);
+                        $s->delete();
+                    } catch (\Throwable $th) {
+                        //throw $th;
+                        Log::error($th);
+                    }
+                }
             }
             Notifikasi::where('user_id', auth()->user()->id)->where('url', 'like', '%surat/' . $surat->id . '%')->delete();
             $surat->disposisis()->delete();
@@ -548,7 +604,7 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
             $w->where(function ($wu) {
                 $wu->where('user_id', auth()->user()->id)->where('role_id', '!=', 0);
             })->orWhere(function ($wr) {
-                $wr->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray())->where('user_id', 0);
+                $wr->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray())->where('user_id', null);
             });
         })->first();
         if ($cek == null) {
@@ -573,7 +629,7 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
                     ->whereNotNull('menunggu_persetujuan_id')
                     ->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray())
                     ->where(function ($w) {
-                        $w->where('user_id', auth()->user()->id)->orWhere('user_id', 0);
+                        $w->where('user_id', auth()->user()->id)->orWhere('user_id', null);
                     })->pluck('menunggu_persetujuan_id')->toArray();
                 foreach ($surat->disposisis()->whereIn('role_id', $_mp_id)->get() as $d) {
                     if ($d->user_id == 0) {
@@ -591,37 +647,50 @@ Silahkan Login Ke Web Aplikasi Untuk Segera Memeriksa Surat Masuk Dan Meneruskan
             }
 
             if ($request->status == "diterima") {
-                NotificationHelper::createNotification($surat->user_id, 'Surat : ' . $surat->nomor_surat . '. Diterima oleh ' . Auth::user()->nama, 'surat/' . $surat->id, "success");
-                NotificationHelper::createNotification($surat->pemeriksa_id, 'Surat : ' . $surat->nomor_surat . '. Diterima oleh ' . Auth::user()->nama, 'surat/' . $surat->id, "success");
-                foreach ($surat->disposisi_berikutnya as $db) {
-                    if ($db->menunggu_persetujuan_id != null) {
-                        $_cek = $surat->disposisis()->where('role_id', $db->menunggu_persetujuan_id)->where('status', 'diterima')->count();
-                        if ($_cek <= 0) {
-                            continue;
-                        }
-                    }
-                    if ($db->user_id == 0) {
-                        $users = User::whereHas('roles', function ($wr) use ($db) {
-                            $wr->where('id', $db->role_id);
-                        })->get();
-
-                        foreach ($users as $user) {
-                            NotificationHelper::createNotification($user->id, "
-*DISPOSISI SURAT MASUK* : \n
-Nomor : *' . $surat->nomor_surat . '* \n
-Perihal : *' . $surat->perihal . '* \n
-Sifat : *' . $surat->perihal . '* \n
-Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk", 'surat/' . $surat->id, "info");
-                        }
-                    } else {
-                        NotificationHelper::createNotification($db->user_id, "
-*DISPOSISI SURAT MASUK* \n
-Nomor : *' . $surat->nomor_surat . '* \n
-Perihal : *' . $surat->perihal . '* \n
-Sifat : *' . $surat->perihal . '* \n
-Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk", 'surat/' . $surat->id, "info");
-                    }
-                }
+                $keterangan = 
+'Surat : ' . $surat->nomor_surat . '. Diterima oleh ' . Auth::user()->nama;
+                $url = 'surat/' . $surat->id;
+                $type = "success";
+                $notif = Notifikasi::create([
+                    'user_id' => $surat->user_id,
+                    'keterangan' => $keterangan,
+                    'url' => $url,
+                    'type' => $type
+                ]);
+                NotificationHelper::createNotification($surat->user_id,$keterangan, $url,$type);
+                NotificationHelper::createNotification($surat->pemeriksa_id,$keterangan, $url,$type);
+//                 foreach ($surat->disposisi_berikutnya as $db) {
+//                     if ($db->menunggu_persetujuan_id != null) {
+//                         $_cek = $surat->disposisis()->where('role_id', $db->menunggu_persetujuan_id)->where('status', 'diterima')->count();
+//                         if ($_cek <= 0) {
+//                             continue;
+//                         }
+//                     }
+//                     if ($db->user_id == 0) {
+//                         $users = User::whereHas('roles', function ($wr) use ($db) {
+//                             $wr->where('id', $db->role_id);
+//                         })->get();
+// $keterangan = "
+// *DISPOSISI SURAT MASUK* : \n
+// Nomor : *".$surat->nomor_surat ."* \n
+// Perihal : *".$surat->perihal ."* \n
+// Sifat : *".$surat->perihal ."* \n
+// Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk";
+//                             $url = 'surat/' . $surat->id;
+//                             $type = "info";
+//                         foreach ($users as $user) {
+//                             $notif = Notifikasi::create([
+//                                 'user_id' => $user->id,
+//                                 'keterangan' => $keterangan,
+//                                 'url' => $url,
+//                                 'type' => $type
+//                             ]);
+//                             NotificationHelper::createNotification($user->id,$keterangan, $url,$type);
+//                         }
+//                     } else {
+//                         NotificationHelper::createNotification($db->user_id, $keterangan, $url,$type);
+//                     }
+//                 }
             }
 
 
@@ -668,7 +737,10 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
     }
 
     public function ubahLampiran(Request $request)
-    {
+    {   
+        $request->validate([
+            'nama_berkas.*' => 'required',
+        ]);
         foreach ($request->nama_berkas as $berkas_id => $nama_berkas) {
             $berkas = Berkas::find($berkas_id);
             $old_nama = $berkas->nama_berkas;

@@ -8,7 +8,7 @@
                     <a href="{{ route('user.index') }}" class="btn btn-primary mx-2"><i class="fas fa-angle-left"></i>
                         Kembali</a>
                     <a href="{{ route('user.edit', @$user->id) }}" class="btn btn-warning mx-2"><i class="fas fa-edit"></i>
-                        Edit</a>
+                        Ubah</a>
                     <form action="{{ route('user.destroy', $user->id) }}" method="POST" class="d-inline mx-2">
                         @csrf
                         @method('DELETE')

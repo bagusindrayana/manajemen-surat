@@ -48,7 +48,7 @@
                                         <a href="{{ route('role.show', $item->id) }}" class="btn btn-info btn-sm"><i
                                                 class="fas fa-eye"></i> Detail</a>
                                         <a href="{{ route('role.edit', @$item->id) }}" class="btn btn-warning btn-sm mx-1"><i
-                                                class="fas fa-edit"></i> Edit</a>
+                                                class="fas fa-edit"></i> Ubah</a>
                                         <form action="{{ route('role.destroy', $item->id) }}" method="POST"
                                             class="d-inline mx-1">
                                             @csrf

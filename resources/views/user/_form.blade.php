@@ -7,7 +7,7 @@
             <div class="mb-4">
                 <label for="nama">Nama</label>
                 <input type="text" name="nama" required class="form-control" id="nama" aria-describedby="nama"
-                    placeholder="Nama..." value="{{ old('nama', @$user->nama) }}">
+                    placeholder="Nama..." value="{{ old('nama', @$user->nama) }}" maxlength="150">
                 @error('nama')
                     <div class="alert alert-danger">{{ $message }}</div>
                 @enderror
@@ -17,7 +17,7 @@
                 <label for="username">Username</label>
                 <input type="text" name="username" required class="form-control" id="username"
                     aria-describedby="username" placeholder="Username..."
-                    value="{{ old('username', @$user->username) }}">
+                    value="{{ old('username', @$user->username) }}" minlength="5" maxlength="20">
                 @error('username')
                     <div class="alert alert-danger">{{ $message }}</div>
                 @enderror
@@ -27,7 +27,7 @@
                 <div class="mb-4">
                     <label for="password">Password</label>
                     <input type="password" name="password" required class="form-control" id="password"
-                        aria-describedby="password" placeholder="Password..." value="" autocomplete="off">
+                        aria-describedby="password" placeholder="Password..." value="" minlength="5" maxlength="50" autocomplete="off">
                     @error('password')
                         <div class="alert alert-danger">{{ $message }}</div>
                     @enderror
@@ -78,7 +78,7 @@
                             <label for="password">Password</label>
                             <input type="password" name="password" x-bind:required="ubahPassword" class="form-control"
                                 id="password" aria-describedby="password" placeholder="Password..." value=""
-                                autocomplete="off">
+                                autocomplete="off" minlength="5" maxlength="50">
                             @error('password')
                                 <div class="alert alert-danger">{{ $message }}</div>
                             @enderror
@@ -117,7 +117,7 @@
                                 <select x-bind:name="'type[' + index + ']'" x-bind:id="'type-' + index" class="form-control jenis-kontak">
                                     <option value="email" x-bind:selected="field.type == 'email'">Email</option>
                                     <option value="wa" x-bind:selected="field.type == 'wa'">Whatsapp</option>
-                                    <option value="telegram" x-bind:selected="field.type == 'telegram'">Telegram</option>
+                                    {{-- <option value="telegram" x-bind:selected="field.type == 'telegram'">Telegram</option> --}}
                                     {{-- <option value="push" x-bind:selected="field.type == 'push'">Browser Notification</option> --}}
                                 </select>
                             </td>

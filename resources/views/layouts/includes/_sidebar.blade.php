@@ -120,7 +120,7 @@
                     </a>
                 </li>
             @endcanany
-            @if (auth()->user()->hasRole('Lurah'))
+            @if (auth()->user()->can('Check Surat'))
                 <li class="nav-item {{ request()->is('disposisi-surat*') ? 'active' : '' }}">
                     <a href="{{ route('disposisi-surat.index') }}" class="nav-link ">
                         <span class="sidebar-icon">
@@ -131,6 +131,17 @@
                     </a>
                 </li>
             @endif
+            {{-- @if (auth()->user()->can('Disposition Surat'))
+                <li class="nav-item {{ request()->is('disposisi-surat*') ? 'active' : '' }}">
+                    <a href="{{ route('disposisi-surat.index') }}" class="nav-link ">
+                        <span class="sidebar-icon">
+                            <i class="fas fa-mail-bulk me-2 icon"></i>
+                        </span>
+
+                        <span class="sidebar-text">Disposisi Masuk <small class="badge bg-danger">{{ NotificationHelper::jumlahSuratPerluDiperiksa() }}</small></span>
+                    </a>
+                </li>
+            @endif --}}
             <li role="separator" class="dropdown-divider mt-4 mb-3 border-gray-700"></li>
         </ul>
     </div>

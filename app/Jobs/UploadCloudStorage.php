@@ -4,7 +4,9 @@ namespace App\Jobs;
 
 use App\Helpers\StorageHelper;
 use App\Models\CloudStorage;
+use App\Models\KontakNotifikasi;
 use App\Models\Surat;
+use Google\Service\Drive\Permission;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,6 +15,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use PulkitJalan\Google\Facades\Google;
 
 class UploadCloudStorage implements ShouldQueue
 {
@@ -49,6 +52,68 @@ class UploadCloudStorage implements ShouldQueue
         foreach ($this->surat->berkas as $berkas) {
             $activeStorage = CloudStorage::find($this->cloud_storage_id);
             $uploadedResult = $activeStorage->uploadFile($berkas->path, $this->surat->id);
+
+            //goole drive permission
+            if($activeStorage->type == "google"){
+                $drive = Google::make('drive');
+                $setting = StorageHelper::createRefreshToken($activeStorage);
+                $drive->getClient()->setAccessType('offline');
+                $drive->getClient()->setApprovalPrompt("force");
+                $drive->getClient()->setAccessToken($setting->access_token);
+                $drive->getClient()->setAccessToken($setting->access_token);
+                $drive->getClient()->getAccessToken();
+                $drive->getClient()->setUseBatch(true);
+                $batch = $drive->createBatch();
+                
+                if($this->surat->sifat == "biasa"){
+                    $permission = new Permission();
+                    $permission->setRole('reader');
+                    $permission->setType('anyone');
+                    $request = $drive->permissions->create(
+                        $uploadedResult,
+                        $permission
+                    );
+                    $batch->add($request, 'anyone');
+                    $results = $batch->execute();
+                } else if($this->surat->sifat != "rahasia") {
+                    $user_ids = [$this->surat->pemeriksa_id,$this->surat->user_id];
+                    $user_disposisis = $this->surat->disposisis->pluck('user_id')->toArray();
+                    $user_ids = array_merge($user_ids,$user_disposisis);
+                    $emails = KontakNotifikasi::where('type','email')->whereIn('user_id',$user_ids)->pluck('kontak')->toArray();
+
+                    foreach ($emails as $email) {
+                        $permission = new Permission();
+                        $permission->setRole('reader');
+                        $permission->setType('user');
+                        $permission->setEmailAddress($email);
+                        $request = $drive->permissions->create(
+                            $uploadedResult,
+                            $permission
+                        );
+                        $batch->add($request, $email);
+                    }
+                    $results = $batch->execute();
+                    
+                } else {
+                    $emails = KontakNotifikasi::where('type','email')->pluck('kontak')->toArray();
+
+                    foreach ($emails as $email) {
+                        $permission = new Permission();
+                        $permission->setRole('reader');
+                        $permission->setType('user');
+                        $permission->setEmailAddress($email);
+                        $request = $drive->permissions->create(
+                            $uploadedResult,
+                            $permission
+                        );
+                        $batch->add($request, $email);
+                    }
+                    $results = $batch->execute();
+                }
+                
+                
+            }
+            
             $berkas->berkas_storages()->create([
                 'storage_id' => $activeStorage->id,
                 'berkas_id' => $berkas->id,

@@ -6,6 +6,7 @@ use App\Jobs\NotifWa;
 use App\Models\Notifikasi;
 use App\Models\Surat;
 use App\Models\SuratDisposisi;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -40,7 +41,11 @@ class NotificationHelper
     }
 
     public static function jumlahSuratPerluDiperiksa(){
-        return Surat::where('pemeriksa_id',Auth::user()->id)->where('status','diperiksa')->count();
+        $surat = Surat::where('status','diperiksa');
+        if(!auth()->user()->can("View All Surat")){
+            $surat = $surat->where('pemeriksa_id',Auth::user()->id);
+        }
+        return $surat->count();
     }
 
     public static function mySurat()
@@ -51,14 +56,15 @@ class NotificationHelper
 
     public static function createNotification($user_id,$keterangan,$url,$type = "info")
     {
-        $notif = Notifikasi::create([
-            'user_id' => $user_id,
-            'keterangan' => $keterangan,
-            'url' => $url,
-            'type' => $type
-        ]);
-        $message = $notif->keterangan." \n ".url($notif->url);
-        foreach ($notif->user->kontak_notifikasis  as $key => $value) {
+        $user = User::find($user_id);
+        // $notif = Notifikasi::create([
+        //     'user_id' => $user_id,
+        //     'keterangan' => $keterangan,
+        //     'url' => $url,
+        //     'type' => $type
+        // ]);
+        $message = $keterangan." \n ".url($url);
+        foreach ($user->kontak_notifikasis  as $key => $value) {
             
             if($value->type == "wa"){
                 dispatch(new NotifWa($value->kontak,$message));
@@ -69,7 +75,7 @@ class NotificationHelper
                 dispatch(new NotifEmail($value->kontak,$message));
             }
         }
-        return $notif;
+        return true;
     }
 
     public static function myNotification()
@@ -118,7 +124,13 @@ class NotificationHelper
 
     public static function sendEmail($email,$message) {
         try {
-            Mail::to($email)->send($message);
+            
+            Mail::raw($message, function ($message)use($email) {
+                $message
+                ->to($email)
+                ->subject("Testing Notifikasi - ".env("APP_NAME"));
+            });
+            // Mail::to($email)->send($message);
         } catch (\Throwable $th) {
             Log::error($th->getMessage());
         }

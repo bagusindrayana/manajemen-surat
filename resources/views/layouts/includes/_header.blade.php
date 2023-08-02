@@ -50,7 +50,7 @@
                             <small class="text-danger">{{ $item->created_at->diffForHumans() }}</small>
                           </div>
                         </div>
-                        <p class="font-small mt-1 mb-0">{{ $item->keterangan }}</p>
+                        <p class="font-small mt-1 mb-0">{!! $item->keterangan !!}</p>
                       </div>
                     </div>
                   </a>

@@ -21,8 +21,8 @@ class ProfilController extends Controller
     public function update(Request $request)
     {   
         $request->validate([
-            'nama'=>'required',
-            'username'=>'required|unique:users,username,'.Auth::user()->id,
+            'nama'=>'required|max:150',
+            'username'=>'required|min:5|max:20|unique:users,username,'.Auth::user()->id,
         ]);
         DB::beginTransaction();
         try {
@@ -41,10 +41,28 @@ class ProfilController extends Controller
             }
             $user->kontak_notifikasis()->delete();
             foreach ($request->kontak ?? [] as $index => $kontak) {
-                $user->kontak_notifikasis()->create([
-                    'kontak'=>$kontak,
-                    'type'=>$request->type[$index]
-                ]);
+                if($request->type[$index] == "wa" || $request->type[$index] == "email"){
+                    if($kontak == null){
+                        throw new \Exception("Kontak tidak boleh kosong");
+                    } else {
+                        //validate kontak email
+                        if($request->type[$index] == "email"){
+                            if(!filter_var($kontak, FILTER_VALIDATE_EMAIL)){
+                                throw new \Exception("Kontak email tidak valid");
+                            }
+                        }
+                        if($request->type[$index] == "wa"){
+                            if(!preg_match('/^[0-9,+]+$/', $kontak)){
+                                throw new \Exception("Kontak whatsapp tidak valid");
+                            }
+                        }
+                        $user->kontak_notifikasis()->create([
+                            'kontak'=>$kontak,
+                            'type'=>$request->type[$index]
+                        ]);
+                    }
+                }
+                
             }
             DB::commit();
             return redirect()->back()->with('success','Profil berhasil diupdate');
@@ -66,11 +84,11 @@ class ProfilController extends Controller
         $client->setApprovalPrompt("force");
         $client->setScopes(
             array(
-                'https://www.googleapis.com/auth/plus.me',
+                // 'https://www.googleapis.com/auth/plus.me',
                 'https://www.googleapis.com/auth/userinfo.email',
                 'https://www.googleapis.com/auth/userinfo.profile',
                 'https://www.googleapis.com/auth/drive.file',
-                'https://www.googleapis.com/auth/drive'
+                // 'https://www.googleapis.com/auth/drive'
             )
         );
         $request->session()->put('cs_id', $request->session()->get('cs_id'));
