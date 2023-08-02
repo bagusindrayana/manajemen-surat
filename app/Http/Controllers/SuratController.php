@@ -19,7 +19,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Google\Service\Drive\DriveFile;
+use Google\Service\Drive\Permission;
 use Illuminate\Support\Facades\Storage;
+use PulkitJalan\Google\Facades\Google;
 use Webklex\PDFMerger\Facades\PDFMergerFacade as PDFMerger;
 use ZipArchive;
 
@@ -329,9 +332,29 @@ Silahkan Login Ke Aplikasi Web Untuk Melihat Dan Memeriksa Disposisi Surat Masuk
                                 'url' => $url,
                                 'type' => $type
                             ]);
+                            
                             $activeStorages = CloudStorage::where('status', 'active')->where('user_id',$user->id)->where('personal', true)->get();
                             foreach ($activeStorages as $key => $activeStorage) {
-                                dispatch(new UploadCloudStorage($surat, $activeStorage->id));
+                                if($surat->sifat == "rahasia"){
+                                    // $drive = Google::make('drive');
+                                    // $setting = StorageHelper::createRefreshToken($activeStorage);
+                                    // //create shortcut
+                                    // $drive->getClient()->setAccessType('offline');
+                                    // $drive->getClient()->setApprovalPrompt("force");
+                                    // $drive->getClient()->setAccessToken($setting->access_token);
+                                    // foreach($surat->berkas as $berkas){
+                                    //     foreach($berkas->berkas_storages as $b){
+                                    //         $setting2 = StorageHelper::createRefreshToken($b->storage);
+                                    //         $folder_id = $setting2->folder_id;
+                                    //         $d_file = new DriveFile();
+                                    //         $d_file->setName(basename($setting));
+                                    //         $d_file->setParents([$folder_id]);
+                                    //     }
+                                    // }
+                                } else {
+                                    dispatch(new UploadCloudStorage($surat, $activeStorage->id));
+                                }
+                                
                             }
                             NotificationHelper::createNotification($user->id, $keterangan,$url, $type);
                         }

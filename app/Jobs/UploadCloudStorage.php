@@ -54,13 +54,13 @@ class UploadCloudStorage implements ShouldQueue
             $uploadedResult = $activeStorage->uploadFile($berkas->path, $this->surat->id);
 
             //goole drive permission
-            if($activeStorage->type == "google"){
+            if($activeStorage->type == "google" && $activeStorage->status == "active" && $activeStorage->personal == false){
                 $drive = Google::make('drive');
                 $setting = StorageHelper::createRefreshToken($activeStorage);
                 $drive->getClient()->setAccessType('offline');
                 $drive->getClient()->setApprovalPrompt("force");
                 $drive->getClient()->setAccessToken($setting->access_token);
-                $drive->getClient()->setAccessToken($setting->access_token);
+                // $drive->getClient()->setAccessToken($setting->access_token);
                 $drive->getClient()->getAccessToken();
                 $drive->getClient()->setUseBatch(true);
                 $batch = $drive->createBatch();
