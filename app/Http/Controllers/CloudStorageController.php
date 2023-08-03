@@ -250,16 +250,21 @@ class CloudStorageController extends Controller
                 Log::error($th);
             }
             $cloudStorage->delete();
-            if($cloudStorage->setting != null){
-                if($cloudStorage->setting->access_token != null){
-                    $oauth2 = Google::make('oauth2');
-                    $setting = StorageHelper::createRefreshToken($cloudStorage);
-                    $oauth2->getClient()->setAccessType('offline');
-                    $oauth2->getClient()->setApprovalPrompt("force");
-                    $oauth2->getClient()->setAccessToken($setting->access_token);
-                    //disconnect
-                    $oauth2->getClient()->revokeToken();
+            try {
+                if($cloudStorage->setting != null){
+                    if($cloudStorage->setting->access_token != null){
+                        $oauth2 = Google::make('oauth2');
+                        $setting = StorageHelper::createRefreshToken($cloudStorage);
+                        $oauth2->getClient()->setAccessType('offline');
+                        $oauth2->getClient()->setApprovalPrompt("force");
+                        $oauth2->getClient()->setAccessToken($setting->access_token);
+                        //disconnect
+                        $oauth2->getClient()->revokeToken();
+                    }
                 }
+            } catch (\Throwable $th) {
+                //throw $th;
+                Log::error($th);
             }
             UserLogHelper::create('menghapus cloud storage dengan nama : '.$cloudStorage->name);
             DB::commit();
