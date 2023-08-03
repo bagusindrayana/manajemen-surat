@@ -165,10 +165,10 @@
                                             {{ $loop->iteration }}
                                         </td>
                                         <td>
-                                            {{ $v->storage->name }}
+                                            {{ @$v->storage->name }}
                                         </td>
                                         <td>
-                                            {{ $v->storage->type }}
+                                            {{ @$v->storage->type }}
                                         </td>
                                         <td>
                                             <a target="_blank" href="{{ route('berkas-storage.view', $v->id) }}"
@@ -387,7 +387,7 @@
                                                     @foreach ($roles as $role)
                                                         <option value="{{ $role->id }}"
                                                             x-bind:selected="field.user_id == {{ $role->id }}">
-                                                            {{ $role->name }}</option>
+                                                            {{ @$role->name }}</option>
                                                     @endforeach
                                                 </select>
 

@@ -52,6 +52,10 @@ class CloudStorage extends Model
         return json_decode($this->setting_json);
     }
 
+    public function berkas_storages() {
+        return $this->hasMany(BerkasStorage::class, 'storage_id', 'id');
+    }
+
     public function getDriverAttribute()
     {   
         $setting = $this->setting;

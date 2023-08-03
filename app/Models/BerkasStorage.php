@@ -22,7 +22,9 @@ class BerkasStorage extends Model
 
     public function storage()
     {
-        return $this->belongsTo(CloudStorage::class, 'storage_id');
+        return $this->belongsTo(CloudStorage::class, 'storage_id')->withDefault([
+            'name'=>'Data Di Hapus'
+        ]);
     }
 
     public function getLinkAttribute()

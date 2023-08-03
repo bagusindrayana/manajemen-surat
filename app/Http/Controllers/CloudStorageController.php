@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Google\Service\Drive\DriveFile;
+use Illuminate\Support\Facades\Log;
 use PulkitJalan\Google\Facades\Google;
 
 class CloudStorageController extends Controller
@@ -242,6 +243,12 @@ class CloudStorageController extends Controller
         }
         DB::beginTransaction();
         try {
+            try {
+                $cloudStorage->berkas_storages()->delete();
+            } catch (\Throwable $th) {
+                //throw $th;
+                Log::error($th);
+            }
             $cloudStorage->delete();
             if($cloudStorage->setting != null){
                 if($cloudStorage->setting->access_token != null){
@@ -260,6 +267,7 @@ class CloudStorageController extends Controller
         } catch (\Throwable $th) {
             //throw $th;
             DB::rollBack();
+            Log::error($th);
             return redirect()->back()->with('error', 'Storage gagal dihapus');
         }
     }
