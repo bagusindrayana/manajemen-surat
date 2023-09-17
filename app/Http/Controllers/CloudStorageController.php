@@ -278,28 +278,38 @@ class CloudStorageController extends Controller
     }
 
     public function authGoogle(Request $request)
-    {
+    {   
+        // Inisialisasi OAuth2 dengan Google
         $oauth2 = Google::make('oauth2');
+        // Set jenis akses ke 'offline' untuk mendapatkan refresh token
         $oauth2->getClient()->setAccessType('offline');
         //set redirect uri
         $oauth2->getClient()->setRedirectUri(url('cloud-storage/login-google'));
+        // Memaksa pengguna untuk memberikan izin lagi
         $oauth2->getClient()->setApprovalPrompt("force");
+        // Set daftar izin (scopes) yang diperlukan
         $oauth2->getClient()->setScopes(
             array(
-                // 'https://www.googleapis.com/auth/plus.me',
                 'https://www.googleapis.com/auth/userinfo.email',
                 'https://www.googleapis.com/auth/userinfo.profile',
                 'https://www.googleapis.com/auth/drive.file',
-                // 'https://www.googleapis.com/auth/drive'
             )
         );
+        // Menggunakan request untuk mengelola session dan data dari permintaan HTTP
+        // Menyimpan nilai dari 'cs_id' ke dalam session dengan kunci 'cs_id'
         $request->session()->put('cs_id', $request->session()->get('cs_id'));
+        // Memeriksa apakah parameter 'code' ada dalam permintaan HTTP
         if ($request->get('code')) {
+            // Melakukan otentikasi menggunakan 'code' yang diberikan
             $oauth2->getClient()->authenticate($request->get('code'));
+            // Menyimpan access token yang diperoleh dari otentikasi ke dalam session dengan kunci 'token'
             $request->session()->put('token', $oauth2->getClient()->getAccessToken());
+            // Mengatur state dari OAuth2 client dengan menggabungkan 'cs_id' dari session dan nilai 'code' dari permintaan
             $oauth2->getClient()->setState($request->session()->get('cs_id')."|".$request->get('code'));
         }
+        // Memeriksa apakah ada access token dalam session
         if ($request->session()->get('token')) {
+            // Mengatur access token dari OAuth2 client dengan nilai dari session
             $oauth2->getClient()->setAccessToken($request->session()->get('token'));
         }
         if ($oauth2->getClient()->getAccessToken()) {
@@ -353,18 +363,7 @@ class CloudStorageController extends Controller
                 return redirect()->route('cloud-storage.index')->with('success', 'Google Drive has been connected successfully');
             } else {
                 return abort(404);
-            }
-            //dd($goole_user);
-
-            //$request->session()->put('name', $goole_user['name']);
-            // if ($set_user = User::where('email',$goole_user['email'])->first())
-            // {
-            // 	//logged your user via auth login
-            // }else{
-            // 	//register your user with response data
-            // }               
-
-            //return redirect()->route('login.google-success');          
+            }        
         } else {
             //For Guest user, get google login url
             $oauth2->getClient()->setState( $request->session()->get('cs_id')."|");

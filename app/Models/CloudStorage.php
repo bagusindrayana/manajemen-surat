@@ -224,22 +224,6 @@ class CloudStorage extends Model
                 $d_file->setName(basename($path));
                 $d_file->setParents([$folder_id]);
 
-                //check folder exist
-                // $optParams = array(
-                //     'pageSize' => 10,
-                //     'fields' => 'nextPageToken, files(id, name, size, mimeType, webViewLink, webContentLink, iconLink, trashed, createdTime, modifiedTime)',
-                //     'q' => "trashed=false and '$folder_id' in parents"
-                // );
-                // $files = $drive->files->listFiles($optParams)->files;
-                // if (count($files) == 0) {
-                //     $folder = new DriveFile();
-                //     $folder->setName($setting->folder_name);
-                //     $folder->setMimeType('application/vnd.google-apps.folder');
-                //     $folder->setParents([$folder_id]);
-                //     $folder = $drive->files->create($folder);
-                //     $folder_id = $folder->id;
-                // }
-
                 // proses upload file ke Google Drive dg multipart
                 $_upload = $drive->files->create(
                     $d_file,
@@ -249,21 +233,6 @@ class CloudStorage extends Model
                         'uploadType' => 'multipart'
                     )
                 );
-
-                //set permission to public
-                // $drive->getClient()->setAccessToken($setting->access_token);
-                // $drive->getClient()->getAccessToken();
-                // $drive->getClient()->setUseBatch(true);
-                // $batch = $drive->createBatch();
-                // $permission = new \Google_Service_Drive_Permission();
-                // $permission->setRole('commenter');
-                // $permission->setType('user');
-                // $permission->setEmailAddress('<Email Address>');
-                // $request = $drive->permissions->create(
-                //     $_upload->id,
-                //     $permission
-                // );
-
                 //result path
                 $result = $_upload->id;
                
